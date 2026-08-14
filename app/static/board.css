@@ -99,3 +99,91 @@ html, body {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* ---- coreografia de revelacao (etapa 4) ---- */
+
+#revelacao {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 6, 10, 0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+#revelacao.ativa {
+    opacity: 1;
+}
+
+.revelacao-caixa {
+    text-align: center;
+}
+
+.revelacao-anuncio {
+    font-size: 2.2vw;
+    color: #a0a8bd;
+    letter-spacing: 0.15em;
+    margin-bottom: 1.5vw;
+}
+
+#rev-foto {
+    width: 22vw;
+    height: 22vw;
+    object-fit: cover;
+    border-radius: 16px;
+    border: 6px solid var(--cor-time, #444);
+    filter: blur(28px) brightness(0.6);
+    transition: filter 0.7s ease;
+    background: #222;
+}
+
+#rev-foto.revelada {
+    filter: blur(0) brightness(1);
+}
+
+.revelacao-nome {
+    font-size: 4vw;
+    font-weight: 900;
+    margin-top: 1vw;
+    opacity: 0;
+    transform: scale(0.7);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.revelacao-nome.mostrar {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.revelacao-info {
+    font-size: 1.6vw;
+    color: #ccc;
+    margin-top: 0.3vw;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.revelacao-info.mostrar {
+    opacity: 1;
+}
+
+.revelacao-veredito {
+    font-size: 2.4vw;
+    font-weight: 900;
+    margin-top: 1.2vw;
+    opacity: 0;
+    transform: translateY(15px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.revelacao-veredito.mostrar {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.revelacao-veredito.roubo { color: #ffb703; }
+.revelacao-veredito.reach { color: #e63946; }

@@ -18,6 +18,16 @@
         {% endfor %}
     </div>
 
+    <div id="revelacao">
+        <div class="revelacao-caixa">
+            <div class="revelacao-anuncio">ESCOLHA Nº <span id="rev-pick"></span></div>
+            <img id="rev-foto" alt="">
+            <div id="rev-nome" class="revelacao-nome"></div>
+            <div id="rev-info" class="revelacao-info"></div>
+            <div id="rev-veredito" class="revelacao-veredito"></div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='board.js') }}"></script>
 </body>
 </html>

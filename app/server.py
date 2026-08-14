@@ -33,6 +33,9 @@ BASE = Path(__file__).parent.parent
 DATA = BASE / "data"
 NUM_TIMES = 12
 
+# quantos picks de diferenca do ADP pra virar veredito (meia rodada)
+LIMIAR_VEREDITO = 6
+
 app = Flask(__name__)
 
 
@@ -86,6 +89,21 @@ def calcular_rodada_e_slot(numero_pick: int) -> tuple[int, int]:
     else:
         slot = NUM_TIMES - posicao_na_rodada + 1
     return rodada, slot
+
+
+def calcular_veredito(numero_pick: int, player_id: str) -> tuple[float | None, str | None]:
+    """Compara o pick com o ADP: escolhido bem antes do esperado = reach,
+    bem depois (jogador "caiu") = roubo. Sem ADP conhecido, sem veredito."""
+    adp = ADP.get(player_id)
+    if adp is None:
+        return None, None
+
+    diferenca = numero_pick - adp
+    if diferenca <= -LIMIAR_VEREDITO:
+        return adp, "reach"
+    if diferenca >= LIMIAR_VEREDITO:
+        return adp, "roubo"
+    return adp, None
 
 
 def buscar_jogador_por_id(player_id: str) -> dict | None:
@@ -218,6 +236,7 @@ def registrar_pick():
     numero_pick = len(estado["picks"]) + 1
     rodada, slot = calcular_rodada_e_slot(numero_pick)
     time_info = TIMES_NFL.get(jogador["time"], {})
+    adp, veredito = calcular_veredito(numero_pick, jogador["id"])
 
     pick = {
         "pick": numero_pick,
@@ -228,6 +247,8 @@ def registrar_pick():
         "posicao": jogador["posicao"],
         "time_nfl": jogador["time"],
         "cor_time": time_info.get("cor", "#333333"),
+        "adp": adp,
+        "veredito": veredito,
         "ts": time.time(),
     }
     estado["picks"].append(pick)
