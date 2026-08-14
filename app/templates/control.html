@@ -64,6 +64,7 @@
     #enviar { background: #2e7d32; color: #fff; }
     #desfazer { background: #444; color: #fff; margin-top: 24px; }
     #reset { background: #7d2e2e; color: #fff; }
+    #finalizar { background: #8a6d1a; color: #fff; }
     #mensagem {
         margin-top: 16px;
         padding: 12px;
@@ -126,6 +127,10 @@
 
     <button id="desfazer">Desfazer ultimo pick</button>
     <button id="reset">Zerar draft inteiro</button>
+    <button id="finalizar">Finalizar draft e gerar análise</button>
+    <p class="sub" style="text-align: center; margin-top: 12px;">
+        <a href="/comentarios" style="color: #d8c98a;" target="_blank">Ver comentários do Tom Brady por rodada →</a>
+    </p>
 
     <details id="secao-times">
         <summary>Nomes dos times</summary>
@@ -268,6 +273,17 @@
             if (!confirm("Zerar o draft inteiro?")) return;
             await fetch("/reset", { method: "POST" });
             mostrarMensagem("Draft zerado.", true);
+        });
+
+        document.getElementById("finalizar").addEventListener("click", async () => {
+            if (!confirm("Finalizar o draft e gerar a analise? Abra /resultado pra ver.")) return;
+            const resposta = await fetch("/finalizar", { method: "POST" });
+            const dados = await resposta.json();
+            if (dados.ok) {
+                mostrarMensagem("Gerando analise final - abra /resultado.", true);
+            } else {
+                mostrarMensagem(dados.erro, false);
+            }
         });
 
         // --- nomes dos times ---

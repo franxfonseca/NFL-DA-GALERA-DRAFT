@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Draft Night - Resultado</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+        width: 100%;
+        min-height: 100%;
+        background: #0b0e14;
+        color: #f2f2f2;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+    body { padding: 3vh 3vw; }
+
+    h1 {
+        font-size: 2.2vw;
+        text-align: center;
+        letter-spacing: 0.1em;
+        color: #d8c98a;
+        margin-bottom: 2vh;
+    }
+
+    #estado-vazio, #estado-gerando {
+        text-align: center;
+        margin-top: 15vh;
+        font-size: 1.4vw;
+        color: #a0a8bd;
+    }
+
+    #resumo-geral {
+        max-width: 60vw;
+        margin: 0 auto 4vh;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6vw;
+    }
+
+    #resumo-geral p {
+        font-size: 1.2vw;
+        font-style: italic;
+        color: #ccc;
+        line-height: 1.5;
+    }
+
+    #grade-times {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.2vw;
+        max-width: 90vw;
+        margin: 0 auto;
+    }
+
+    .card-time {
+        background: #12161f;
+        border: 2px solid #2a3142;
+        border-radius: 10px;
+        padding: 1vw;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4vw;
+        cursor: pointer;
+    }
+    .card-time:hover { border-color: #444d63; }
+    .card-time.aberto { border-color: #d8c98a; }
+
+    .card-time .cabecalho {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-time .nome { font-size: 1.05vw; font-weight: bold; }
+    .card-time .dono { font-size: 0.8vw; color: #a0a8bd; }
+    .card-time .nota { font-size: 1.8vw; font-weight: 900; }
+
+    .card-time .rodape {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5vw;
+    }
+
+    .card-time .comentario { font-size: 0.85vw; color: #ccc; line-height: 1.4; flex: 1; }
+
+    .nota-a { color: #4caf50; }
+    .nota-b { color: #8bc34a; }
+    .nota-c { color: #ffc107; }
+    .nota-d { color: #ff9800; }
+    .nota-f { color: #e63946; }
+
+    .btn-ouvir {
+        background: #1b2130;
+        border: 2px solid #2a3142;
+        border-radius: 50%;
+        width: 2vw;
+        height: 2vw;
+        min-width: 28px;
+        min-height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1vw;
+        flex-shrink: 0;
+        color: #d8c98a;
+    }
+    .btn-ouvir:hover { border-color: #d8c98a; }
+    .btn-ouvir.falando { background: #d8c98a; color: #0b0e14; }
+
+    .brady-mini {
+        width: 2vw;
+        height: 2vw;
+        min-width: 28px;
+        min-height: 28px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #d8c98a;
+        flex-shrink: 0;
+    }
+
+    .grupo-ouvir {
+        display: flex;
+        align-items: center;
+        gap: 0.4vw;
+        flex-shrink: 0;
+    }
+
+    .elenco {
+        margin-top: 0.4vw;
+        padding-top: 0.5vw;
+        border-top: 1px solid #2a3142;
+        display: none;
+        flex-direction: column;
+        gap: 0.2vw;
+    }
+    .card-time.aberto .elenco { display: flex; }
+
+    .elenco .jogador {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.78vw;
+        color: #ccc;
+    }
+    .elenco .jogador .pos { color: #a0a8bd; }
+
+    .oculto { display: none; }
+</style>
+</head>
+<body>
+    <h1>ANÁLISE FINAL DO DRAFT</h1>
+
+    <div id="estado-vazio" class="oculto">O draft ainda não foi finalizado. Vá em /control e clique em "Finalizar draft".</div>
+    <div id="estado-gerando" class="oculto">Gerando análise final, um momento...</div>
+
+    <div id="conteudo" class="oculto">
+        <div id="resumo-geral">
+            <div class="grupo-ouvir">
+                <img class="brady-mini" src="{{ url_for('static', filename='img/tom_brady.png') }}" alt="Tom Brady">
+                <button class="btn-ouvir" id="btn-ouvir-resumo" title="Ouvir resumo geral">🔊</button>
+            </div>
+            <p id="resumo-geral-texto"></p>
+        </div>
+        <div id="grade-times"></div>
+    </div>
+
+    <script>
+        // fala so quando o operador clica no icone - nunca sozinho
+        let vozEscolhida = null;
+        let botaoFalando = null;
+
+        function pegarVoz() {
+            if (vozEscolhida) return vozEscolhida;
+            vozEscolhida = speechSynthesis.getVoices().find((v) => v.lang.startsWith("pt")) || null;
+            return vozEscolhida;
+        }
+
+        function falar(texto, botao) {
+            try {
+                speechSynthesis.cancel(); // corta qualquer fala anterior antes de comecar essa
+                if (botaoFalando) botaoFalando.classList.remove("falando");
+
+                const utter = new SpeechSynthesisUtterance(texto);
+                utter.lang = "pt-BR";
+                const voz = pegarVoz();
+                if (voz) utter.voice = voz;
+
+                botao.classList.add("falando");
+                botaoFalando = botao;
+                utter.onend = () => botao.classList.remove("falando");
+                utter.onerror = () => botao.classList.remove("falando");
+
+                speechSynthesis.speak(utter);
+            } catch (erro) {
+                console.error("falha no TTS:", erro);
+            }
+        }
+
+        function corDaNota(nota) {
+            const letra = (nota || "").trim().charAt(0).toUpperCase();
+            return { A: "nota-a", B: "nota-b", C: "nota-c", D: "nota-d", F: "nota-f" }[letra] || "";
+        }
+
+        function montarGrade(estado) {
+            const analise = estado.analise_final;
+
+            document.getElementById("resumo-geral-texto").textContent = analise.resumo_geral || "";
+            document.getElementById("btn-ouvir-resumo").onclick = (evento) => {
+                falar(analise.resumo_geral || "", evento.currentTarget);
+            };
+
+            const grade = document.getElementById("grade-times");
+            grade.innerHTML = "";
+            const times = analise.times || {};
+            const slots = Object.keys(times).sort((a, b) => Number(a) - Number(b));
+
+            for (const slot of slots) {
+                const dados = times[slot];
+                const infoTime = (estado.times || {})[slot] || {};
+                const nomeTime = infoTime.nome_time || `Time ${slot}`;
+
+                const card = document.createElement("div");
+                card.className = "card-time";
+
+                const cabecalho = document.createElement("div");
+                cabecalho.className = "cabecalho";
+                const nomeWrap = document.createElement("div");
+                const nome = document.createElement("div");
+                nome.className = "nome";
+                nome.textContent = nomeTime;
+                const dono = document.createElement("div");
+                dono.className = "dono";
+                dono.textContent = infoTime.dono || "";
+                nomeWrap.append(nome, dono);
+
+                const nota = document.createElement("div");
+                nota.className = `nota ${corDaNota(dados.nota)}`;
+                nota.textContent = dados.nota || "?";
+                cabecalho.append(nomeWrap, nota);
+
+                const rodape = document.createElement("div");
+                rodape.className = "rodape";
+
+                const grupoOuvir = document.createElement("div");
+                grupoOuvir.className = "grupo-ouvir";
+
+                const foto = document.createElement("img");
+                foto.className = "brady-mini";
+                foto.src = "{{ url_for('static', filename='img/tom_brady.png') }}";
+                foto.alt = "Tom Brady";
+
+                const botao = document.createElement("button");
+                botao.className = "btn-ouvir";
+                botao.title = `Ouvir sobre ${nomeTime}`;
+                botao.textContent = "🔊";
+                botao.onclick = (evento) => {
+                    evento.stopPropagation(); // nao expande/colapsa o elenco ao clicar em ouvir
+                    falar(`${nomeTime}, nota ${dados.nota}. ${dados.comentario || ""}`, evento.currentTarget);
+                };
+
+                grupoOuvir.append(foto, botao);
+
+                const comentario = document.createElement("div");
+                comentario.className = "comentario";
+                comentario.textContent = dados.comentario || "";
+
+                rodape.append(grupoOuvir, comentario);
+
+                // elenco do time - jogador e posicao, na ordem que foram draftados
+                const picksDoTime = (estado.picks || [])
+                    .filter((p) => String(p.slot) === slot)
+                    .sort((a, b) => a.pick - b.pick);
+
+                const elenco = document.createElement("div");
+                elenco.className = "elenco";
+                for (const p of picksDoTime) {
+                    const linha = document.createElement("div");
+                    linha.className = "jogador";
+                    const nomeJogador = document.createElement("span");
+                    nomeJogador.textContent = `R${p.rodada} - ${p.nome}`;
+                    const pos = document.createElement("span");
+                    pos.className = "pos";
+                    pos.textContent = `${p.posicao} - ${p.time_nfl}`;
+                    linha.append(nomeJogador, pos);
+                    elenco.appendChild(linha);
+                }
+
+                card.addEventListener("click", () => card.classList.toggle("aberto"));
+
+                card.append(cabecalho, rodape, elenco);
+                grade.appendChild(card);
+            }
+        }
+
+        function renderizar(estado) {
+            const vazio = document.getElementById("estado-vazio");
+            const gerando = document.getElementById("estado-gerando");
+            const conteudo = document.getElementById("conteudo");
+
+            if (estado.gerando_analise_final) {
+                vazio.classList.add("oculto");
+                gerando.classList.remove("oculto");
+                conteudo.classList.add("oculto");
+                return;
+            }
+
+            if (!estado.analise_final) {
+                vazio.classList.remove("oculto");
+                gerando.classList.add("oculto");
+                conteudo.classList.add("oculto");
+                return;
+            }
+
+            vazio.classList.add("oculto");
+            gerando.classList.add("oculto");
+            conteudo.classList.remove("oculto");
+
+            montarGrade(estado);
+        }
+
+        const fonte = new EventSource("/stream");
+        fonte.onmessage = (evento) => {
+            try {
+                renderizar(JSON.parse(evento.data));
+            } catch (erro) {
+                console.error("falha ao processar estado:", erro);
+            }
+        };
+    </script>
+</body>
+</html>
