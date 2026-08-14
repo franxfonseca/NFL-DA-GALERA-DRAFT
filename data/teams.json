@@ -1,0 +1,194 @@
+{
+  "ARI": {
+    "nome": "Arizona Cardinals",
+    "cor": "#a40227",
+    "cor_alt": "#ffffff",
+    "espn_id": 22
+  },
+  "ATL": {
+    "nome": "Atlanta Falcons",
+    "cor": "#a71930",
+    "cor_alt": "#000000",
+    "espn_id": 1
+  },
+  "BAL": {
+    "nome": "Baltimore Ravens",
+    "cor": "#29126f",
+    "cor_alt": "#000000",
+    "espn_id": 33
+  },
+  "BUF": {
+    "nome": "Buffalo Bills",
+    "cor": "#00338d",
+    "cor_alt": "#d50a0a",
+    "espn_id": 2
+  },
+  "CAR": {
+    "nome": "Carolina Panthers",
+    "cor": "#0085ca",
+    "cor_alt": "#000000",
+    "espn_id": 29
+  },
+  "CHI": {
+    "nome": "Chicago Bears",
+    "cor": "#0b1c3a",
+    "cor_alt": "#e64100",
+    "espn_id": 3
+  },
+  "CIN": {
+    "nome": "Cincinnati Bengals",
+    "cor": "#fb4f14",
+    "cor_alt": "#000000",
+    "espn_id": 4
+  },
+  "CLE": {
+    "nome": "Cleveland Browns",
+    "cor": "#472a08",
+    "cor_alt": "#ff3c00",
+    "espn_id": 5
+  },
+  "DAL": {
+    "nome": "Dallas Cowboys",
+    "cor": "#002a5c",
+    "cor_alt": "#b0b7bc",
+    "espn_id": 6
+  },
+  "DEN": {
+    "nome": "Denver Broncos",
+    "cor": "#0a2343",
+    "cor_alt": "#fc4c02",
+    "espn_id": 7
+  },
+  "DET": {
+    "nome": "Detroit Lions",
+    "cor": "#0076b6",
+    "cor_alt": "#bbbbbb",
+    "espn_id": 8
+  },
+  "GB": {
+    "nome": "Green Bay Packers",
+    "cor": "#204e32",
+    "cor_alt": "#ffb612",
+    "espn_id": 9
+  },
+  "HOU": {
+    "nome": "Houston Texans",
+    "cor": "#021018",
+    "cor_alt": "#eb0028",
+    "espn_id": 34
+  },
+  "IND": {
+    "nome": "Indianapolis Colts",
+    "cor": "#003b75",
+    "cor_alt": "#ffffff",
+    "espn_id": 11
+  },
+  "JAX": {
+    "nome": "Jacksonville Jaguars",
+    "cor": "#007487",
+    "cor_alt": "#d7a22a",
+    "espn_id": 30
+  },
+  "KC": {
+    "nome": "Kansas City Chiefs",
+    "cor": "#e31837",
+    "cor_alt": "#ffb612",
+    "espn_id": 12
+  },
+  "LV": {
+    "nome": "Las Vegas Raiders",
+    "cor": "#000000",
+    "cor_alt": "#a5acaf",
+    "espn_id": 13
+  },
+  "LAC": {
+    "nome": "Los Angeles Chargers",
+    "cor": "#0080c6",
+    "cor_alt": "#ffc20e",
+    "espn_id": 24
+  },
+  "LAR": {
+    "nome": "Los Angeles Rams",
+    "cor": "#003594",
+    "cor_alt": "#ffd100",
+    "espn_id": 14
+  },
+  "MIA": {
+    "nome": "Miami Dolphins",
+    "cor": "#008e97",
+    "cor_alt": "#fc4c02",
+    "espn_id": 15
+  },
+  "MIN": {
+    "nome": "Minnesota Vikings",
+    "cor": "#4f2683",
+    "cor_alt": "#ffc62f",
+    "espn_id": 16
+  },
+  "NE": {
+    "nome": "New England Patriots",
+    "cor": "#002a5c",
+    "cor_alt": "#c60c30",
+    "espn_id": 17
+  },
+  "NO": {
+    "nome": "New Orleans Saints",
+    "cor": "#d3bc8d",
+    "cor_alt": "#000000",
+    "espn_id": 18
+  },
+  "NYG": {
+    "nome": "New York Giants",
+    "cor": "#003c7f",
+    "cor_alt": "#c9243f",
+    "espn_id": 19
+  },
+  "NYJ": {
+    "nome": "New York Jets",
+    "cor": "#115740",
+    "cor_alt": "#ffffff",
+    "espn_id": 20
+  },
+  "PHI": {
+    "nome": "Philadelphia Eagles",
+    "cor": "#06424d",
+    "cor_alt": "#000000",
+    "espn_id": 21
+  },
+  "PIT": {
+    "nome": "Pittsburgh Steelers",
+    "cor": "#000000",
+    "cor_alt": "#ffb612",
+    "espn_id": 23
+  },
+  "SF": {
+    "nome": "San Francisco 49ers",
+    "cor": "#aa0000",
+    "cor_alt": "#b3995d",
+    "espn_id": 25
+  },
+  "SEA": {
+    "nome": "Seattle Seahawks",
+    "cor": "#002a5c",
+    "cor_alt": "#69be28",
+    "espn_id": 26
+  },
+  "TB": {
+    "nome": "Tampa Bay Buccaneers",
+    "cor": "#bd1c36",
+    "cor_alt": "#3e3a35",
+    "espn_id": 27
+  },
+  "TEN": {
+    "nome": "Tennessee Titans",
+    "cor": "#4495d2",
+    "cor_alt": "#001532",
+    "espn_id": 10
+  },
+  "WSH": {
+    "nome": "Washington Commanders",
+    "cor": "#5a1414",
+    "cor_alt": "#ffb612",
+    "espn_id": 28
+  }
+}
