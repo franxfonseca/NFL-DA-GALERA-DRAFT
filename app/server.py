@@ -69,7 +69,8 @@ ARQUIVO_ESTADO = BASE / "app" / "estado_draft.json"
 if ARQUIVO_ESTADO.exists():
     estado = json.loads(ARQUIVO_ESTADO.read_text(encoding="utf-8"))
 else:
-    estado = {"picks": []}
+    estado = {"picks": [], "times": {}}
+estado.setdefault("times", {})  # {"1": {"nome_time": "...", "dono": "..."}, ...}
 
 
 def salvar_estado() -> None:
@@ -165,12 +166,30 @@ def board():
 
 @app.route("/control")
 def control():
-    return render_template("control.html")
+    return render_template("control.html", num_times=NUM_TIMES)
 
 
 @app.route("/estado")
 def get_estado():
     return jsonify(estado)
+
+
+@app.route("/times", methods=["POST"])
+def salvar_times():
+    """Edita nome do time e/ou dono de um slot. Body: {"slot": 1, "nome_time": "...", "dono": "..."}"""
+    dados = request.get_json(silent=True) or {}
+    slot = str(dados.get("slot", ""))
+    if slot not in {str(n) for n in range(1, NUM_TIMES + 1)}:
+        return jsonify({"ok": False, "erro": f"slot invalido: {slot}"}), 400
+
+    info = estado["times"].setdefault(slot, {})
+    if "nome_time" in dados:
+        info["nome_time"] = dados["nome_time"].strip()
+    if "dono" in dados:
+        info["dono"] = dados["dono"].strip()
+
+    salvar_estado()
+    return jsonify({"ok": True, "times": estado["times"]})
 
 
 @app.route("/pick", methods=["POST"])

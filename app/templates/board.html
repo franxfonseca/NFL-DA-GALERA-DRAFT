@@ -9,7 +9,10 @@
     <div id="board">
         {% for slot in range(1, num_times + 1) %}
         <div class="coluna" data-slot="{{ slot }}">
-            <div class="coluna-cabecalho">Time {{ slot }}</div>
+            <div class="coluna-cabecalho">
+                <div class="nome-time">Time {{ slot }}</div>
+                <div class="nome-dono"></div>
+            </div>
             <div class="coluna-picks"></div>
         </div>
         {% endfor %}

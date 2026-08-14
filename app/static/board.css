@@ -31,12 +31,21 @@ html, body {
 
 .coluna-cabecalho {
     text-align: center;
-    font-size: 1.1vw;
-    font-weight: bold;
-    padding: 0.6vw 0;
+    padding: 0.5vw 0.3vw;
     background: #1b2130;
     border-bottom: 2px solid #2a3142;
-    letter-spacing: 0.05em;
+}
+
+.nome-time {
+    font-size: 1.05vw;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+}
+
+.nome-dono {
+    font-size: 0.75vw;
+    color: #a0a8bd;
+    margin-top: 2px;
 }
 
 .coluna-picks {

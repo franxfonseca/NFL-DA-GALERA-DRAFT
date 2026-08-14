@@ -28,6 +28,15 @@ function criarCardPick(pick) {
     return card;
 }
 
+function atualizarCabecalhos(times) {
+    document.querySelectorAll(".coluna").forEach((coluna) => {
+        const slot = coluna.dataset.slot;
+        const info = times[slot] || {};
+        coluna.querySelector(".nome-time").textContent = info.nome_time || `Time ${slot}`;
+        coluna.querySelector(".nome-dono").textContent = info.dono || "";
+    });
+}
+
 function redesenharBoard(picks) {
     // reconstroi tudo do zero - evita qualquer estado desencontrado entre o
     // que ta na tela e o que veio do servidor (ex: depois de um "desfazer")
@@ -47,8 +56,11 @@ async function atualizar() {
         const resposta = await fetch("/estado");
         const estado = await resposta.json();
 
-        // so redesenha se algo realmente mudou - senao a animacao de entrada
-        // dos cards ficaria reiniciando a cada 1.5s sem necessidade
+        // cabecalho (nome do time/dono) atualiza sempre, e barato
+        atualizarCabecalhos(estado.times || {});
+
+        // os picks so redesenham se algo realmente mudou - senao a animacao
+        // de entrada dos cards ficaria reiniciando a cada 1.5s sem necessidade
         const estadoTexto = JSON.stringify(estado.picks);
         if (estadoTexto === ultimoEstadoTexto) {
             return;
