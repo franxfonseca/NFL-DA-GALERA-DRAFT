@@ -12,3 +12,6 @@ data/img/players/*
 data/img/logos/*
 !data/img/players/.gitkeep
 !data/img/logos/.gitkeep
+
+# estado do draft em andamento - runtime, nao codigo
+app/estado_draft.json

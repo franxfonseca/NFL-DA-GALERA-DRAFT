@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Draft Night - Controle</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #12161f;
+        color: #f2f2f2;
+        max-width: 480px;
+        margin: 40px auto;
+        padding: 0 16px;
+    }
+    h1 { font-size: 1.4rem; margin-bottom: 4px; }
+    p.sub { color: #a0a8bd; margin-bottom: 24px; font-size: 0.9rem; }
+    .campo-wrapper { position: relative; }
+    input[type=text] {
+        width: 100%;
+        padding: 14px;
+        font-size: 1.2rem;
+        border-radius: 6px;
+        border: 2px solid #2a3142;
+        background: #1b2130;
+        color: #fff;
+    }
+    #sugestoes {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #1b2130;
+        border: 2px solid #2a3142;
+        border-radius: 6px;
+        overflow: hidden;
+        z-index: 10;
+        display: none;
+    }
+    .sugestao-item {
+        padding: 12px 14px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid #2a3142;
+    }
+    .sugestao-item:last-child { border-bottom: none; }
+    .sugestao-item:hover, .sugestao-item.ativa {
+        background: #2a3142;
+    }
+    .sugestao-item .info {
+        color: #a0a8bd;
+        font-size: 0.85rem;
+    }
+    button {
+        margin-top: 12px;
+        padding: 14px;
+        font-size: 1.1rem;
+        width: 100%;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    #enviar { background: #2e7d32; color: #fff; }
+    #desfazer { background: #444; color: #fff; margin-top: 24px; }
+    #reset { background: #7d2e2e; color: #fff; }
+    #mensagem {
+        margin-top: 16px;
+        padding: 12px;
+        border-radius: 6px;
+        min-height: 20px;
+        font-size: 0.95rem;
+    }
+    #mensagem.ok { background: #1b3a1e; }
+    #mensagem.erro { background: #3a1b1b; }
+
+    details {
+        margin-top: 28px;
+        border: 2px solid #2a3142;
+        border-radius: 6px;
+        padding: 8px 12px;
+    }
+    summary {
+        cursor: pointer;
+        padding: 8px 0;
+        font-weight: 600;
+    }
+    .linha-time {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    .linha-time span {
+        width: 28px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #a0a8bd;
+        font-size: 0.85rem;
+    }
+    .linha-time input {
+        width: 100%;
+        padding: 8px;
+        font-size: 0.9rem;
+        border-radius: 4px;
+        border: 2px solid #2a3142;
+        background: #1b2130;
+        color: #fff;
+    }
+</style>
+</head>
+<body>
+    <h1>Controle do Draft</h1>
+    <p class="sub">Digite o nome do jogador. Clique numa sugestao pra registrar na hora, ou aperte enter se ja souber o nome completo.</p>
+
+    <form id="form-pick">
+        <div class="campo-wrapper">
+            <input type="text" id="nome" placeholder="Nome do jogador" autofocus autocomplete="off">
+            <div id="sugestoes"></div>
+        </div>
+        <button type="submit" id="enviar">Registrar pick</button>
+    </form>
+
+    <div id="mensagem"></div>
+
+    <button id="desfazer">Desfazer ultimo pick</button>
+    <button id="reset">Zerar draft inteiro</button>
+
+    <details id="secao-times">
+        <summary>Nomes dos times</summary>
+        {% for slot in range(1, num_times + 1) %}
+        <div class="linha-time" data-slot="{{ slot }}">
+            <span>{{ slot }}</span>
+            <input type="text" class="campo-nome-time" placeholder="Nome do time">
+            <input type="text" class="campo-dono" placeholder="Nome do dono">
+        </div>
+        {% endfor %}
+    </details>
+
+    <script>
+        const form = document.getElementById("form-pick");
+        const campoNome = document.getElementById("nome");
+        const mensagem = document.getElementById("mensagem");
+        const caixaSugestoes = document.getElementById("sugestoes");
+
+        let sugestoesAtuais = [];
+        let indiceAtivo = -1;
+        let timerBusca = null;
+
+        function mostrarMensagem(texto, ok) {
+            mensagem.textContent = texto;
+            mensagem.className = ok ? "ok" : "erro";
+        }
+
+        function esconderSugestoes() {
+            caixaSugestoes.style.display = "none";
+            caixaSugestoes.innerHTML = "";
+            sugestoesAtuais = [];
+            indiceAtivo = -1;
+        }
+
+        function desenharSugestoes() {
+            caixaSugestoes.innerHTML = "";
+            sugestoesAtuais.forEach((jogador, i) => {
+                const item = document.createElement("div");
+                item.className = "sugestao-item" + (i === indiceAtivo ? " ativa" : "");
+                item.innerHTML = `<span>${jogador.nome}</span><span class="info">${jogador.posicao} - ${jogador.time}</span>`;
+                item.addEventListener("mousedown", (evento) => {
+                    // mousedown (nao click) pra disparar antes do input perder o foco
+                    evento.preventDefault();
+                    selecionarJogador(jogador);
+                });
+                caixaSugestoes.appendChild(item);
+            });
+            caixaSugestoes.style.display = sugestoesAtuais.length ? "block" : "none";
+        }
+
+        async function selecionarJogador(jogador) {
+            esconderSugestoes();
+            await enviarPick({ player_id: jogador.id });
+            campoNome.value = "";
+            campoNome.focus();
+        }
+
+        async function enviarPick(corpo) {
+            try {
+                const resposta = await fetch("/pick", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(corpo),
+                });
+                const dados = await resposta.json();
+                if (dados.ok) {
+                    mostrarMensagem(`Pick ${dados.pick.pick}: ${dados.pick.nome} (${dados.pick.posicao} - ${dados.pick.time_nfl})`, true);
+                    return true;
+                }
+                mostrarMensagem(dados.erro, false);
+                return false;
+            } catch (erro) {
+                mostrarMensagem("Falha ao falar com o servidor.", false);
+                return false;
+            }
+        }
+
+        campoNome.addEventListener("input", () => {
+            clearTimeout(timerBusca);
+            const texto = campoNome.value.trim();
+            if (texto.length < 2) {
+                esconderSugestoes();
+                return;
+            }
+            timerBusca = setTimeout(async () => {
+                const resposta = await fetch(`/buscar?q=${encodeURIComponent(texto)}`);
+                const dados = await resposta.json();
+                sugestoesAtuais = dados.resultados;
+                indiceAtivo = -1;
+                desenharSugestoes();
+            }, 150);
+        });
+
+        campoNome.addEventListener("keydown", (evento) => {
+            if (!sugestoesAtuais.length) return;
+
+            if (evento.key === "ArrowDown") {
+                evento.preventDefault();
+                indiceAtivo = Math.min(indiceAtivo + 1, sugestoesAtuais.length - 1);
+                desenharSugestoes();
+            } else if (evento.key === "ArrowUp") {
+                evento.preventDefault();
+                indiceAtivo = Math.max(indiceAtivo - 1, 0);
+                desenharSugestoes();
+            } else if (evento.key === "Escape") {
+                esconderSugestoes();
+            } else if (evento.key === "Enter" && indiceAtivo >= 0) {
+                evento.preventDefault();
+                selecionarJogador(sugestoesAtuais[indiceAtivo]);
+            }
+        });
+
+        document.addEventListener("click", (evento) => {
+            if (!evento.target.closest(".campo-wrapper")) {
+                esconderSugestoes();
+            }
+        });
+
+        form.addEventListener("submit", async (evento) => {
+            evento.preventDefault();
+            const nome = campoNome.value.trim();
+            if (!nome) return;
+            esconderSugestoes();
+            const ok = await enviarPick({ nome });
+            if (ok) campoNome.value = "";
+            campoNome.focus();
+        });
+
+        document.getElementById("desfazer").addEventListener("click", async () => {
+            const resposta = await fetch("/desfazer", { method: "POST" });
+            const dados = await resposta.json();
+            if (dados.ok) {
+                mostrarMensagem(`Desfeito: ${dados.removido.nome}`, true);
+            } else {
+                mostrarMensagem(dados.erro, false);
+            }
+        });
+
+        document.getElementById("reset").addEventListener("click", async () => {
+            if (!confirm("Zerar o draft inteiro?")) return;
+            await fetch("/reset", { method: "POST" });
+            mostrarMensagem("Draft zerado.", true);
+        });
+
+        // --- nomes dos times ---
+
+        async function carregarNomesTimes() {
+            const resposta = await fetch("/estado");
+            const estado = await resposta.json();
+            const times = estado.times || {};
+            document.querySelectorAll(".linha-time").forEach((linha) => {
+                const info = times[linha.dataset.slot] || {};
+                linha.querySelector(".campo-nome-time").value = info.nome_time || "";
+                linha.querySelector(".campo-dono").value = info.dono || "";
+            });
+        }
+
+        async function salvarNomeTime(linha) {
+            await fetch("/times", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    slot: Number(linha.dataset.slot),
+                    nome_time: linha.querySelector(".campo-nome-time").value,
+                    dono: linha.querySelector(".campo-dono").value,
+                }),
+            });
+        }
+
+        document.querySelectorAll(".linha-time input").forEach((campo) => {
+            campo.addEventListener("blur", () => salvarNomeTime(campo.closest(".linha-time")));
+        });
+
+        carregarNomesTimes();
+    </script>
+</body>
+</html>
