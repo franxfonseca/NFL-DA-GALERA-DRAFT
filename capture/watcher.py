@@ -24,6 +24,14 @@ Uso:
 Se o servidor cair ou a rede falhar, o script continua escutando e so
 avisa no terminal - nunca trava a captura por causa de um pick que falhou
 ao enviar (a regra do projeto e degradacao silenciosa).
+
+IMPORTANTE, testado na pratica: NUNCA cole uma URL na barra de enderecos
+dessa janela do Chromium. Isso quebra o Playwright de um jeito silencioso -
+a pagina navega normal na tela, mas o script para de receber qualquer evento
+dela (heartbeat trava mostrando a URL antiga pra sempre). Navegar clicando
+nos links do proprio site da ESPN (Fantasy Football -> Minhas Ligas -> Mock
+Draft Lobby -> entrar na sala) nunca reproduziu esse problema - testado com
+29 picks seguidos sem falha nenhuma.
 """
 
 import time
@@ -33,6 +41,8 @@ import requests
 from playwright.sync_api import sync_playwright
 
 BASE = Path(__file__).parent.parent
+SHOTDIR = BASE / "capture" / "diag_shots"
+SHOTDIR.mkdir(exist_ok=True)
 PROFILE = BASE / "recon" / "chrome-profile"  # mesmo perfil logado da etapa 1
 SERVIDOR = "http://localhost:5000"
 
@@ -119,12 +129,18 @@ def main() -> None:
             while True:
                 time.sleep(5)
                 rescanear()
+                print(f"  [heartbeat] abas abertas: {[pg.url for pg in contexto.pages]}", flush=True)
+                try:
+                    contexto.pages[0].screenshot(path=str(SHOTDIR / "pagina0.png"))
+                except Exception as erro:
+                    print(f"  [screenshot falhou] {erro}", flush=True)
                 silencio = time.time() - _ultimo_frame_ts
                 if silencio > LIMIAR_SILENCIO_S:
                     print(
                         f"  [AVISO] {int(silencio)}s sem nenhum frame do draft. "
                         f"Se o draft esta ativo, a captura pode ter parado - "
-                        f"confira a janela ou passe pro modo manual em /control."
+                        f"confira a janela ou passe pro modo manual em /control.",
+                        flush=True,
                     )
         except KeyboardInterrupt:
             print("\nEncerrando...")
