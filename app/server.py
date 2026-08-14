@@ -132,9 +132,10 @@ def eh_fim_de_rodada(numero_pick: int) -> bool:
 
 def gerar_comentario_rodada(rodada: int) -> str | None:
     """Chama o Groq (gratis, rapido) pra uma analise curta da RODADA inteira,
-    no estilo de um analista rabugento que acha que o futebol acabou quando o
-    Peyton Manning se aposentou. Roda em background - se falhar ou demorar, o
-    show nao espera (degradacao silenciosa). Sem chave configurada, nem tenta."""
+    no estilo do Tom Brady: saudosista e nostalgico do proprio tempo de jogador,
+    sempre comparando tudo com sua carreira e seus 7 aneis de campeao. Roda em
+    background - se falhar ou demorar, o show nao espera (degradacao
+    silenciosa). Sem chave configurada, nem tenta."""
     if not GROQ_API_KEY:
         return None
 
@@ -148,19 +149,38 @@ def gerar_comentario_rodada(rodada: int) -> str | None:
 
     lista_picks = "\n".join(linha(p) for p in picks_da_rodada)
 
+    reaches = [p for p in picks_da_rodada if p["veredito"] == "reach"]
+    roubos = [p for p in picks_da_rodada if p["veredito"] == "roubo"]
+
+    def nomeia(ps):
+        return ", ".join(f"{p['nome']} (pick {p['pick']}, ADP {p['adp']:.1f})" for p in ps)
+
+    if reaches or roubos:
+        destaques = "DESTAQUES QUE VOCE PRECISA CITAR NO COMENTARIO:\n"
+        if reaches:
+            destaques += f"- REACH (escolhido bem antes do ADP): {nomeia(reaches)}\n"
+        if roubos:
+            destaques += f"- ROUBO (jogador caiu, saiu bem depois do ADP): {nomeia(roubos)}\n"
+    else:
+        destaques = "Nenhum reach ou roubo grande nessa rodada - mencione que os picks vieram dentro do esperado."
+
     prompt = (
-        "Voce e um analista de fantasy football debochado e rabugento, do tipo "
-        "que acha que o futebol americano morreu no dia que o Peyton Manning se "
-        "aposentou e detesta o 'futebol moderno'. Voce vive comparando tudo com "
-        "os tempos antigos, com desdem.\n\n"
+        "Voce e o Tom Brady comentando um draft de fantasy football. Voce e "
+        "saudosista e nostalgico do seu proprio tempo como jogador, sempre "
+        "puxando pra sua carreira e seus 7 aneis de campeao do Super Bowl. "
+        "Compara os jogadores de hoje com voce mesmo na epoca de ouro, com um "
+        "certo orgulho e um pouco de deboche.\n\n"
         f"Analise a RODADA {rodada} de um draft de fantasy football como um "
-        "especialista faria de verdade, comparando os picks com o esperado "
-        "(REACH = escolhido cedo demais pro ADP, ROUBO = jogador caiu e saiu "
-        "tarde demais). Cite jogadores especificos pelo nome.\n\n"
+        "especialista faria de verdade.\n\n"
         f"Picks da rodada:\n{lista_picks}\n\n"
+        f"{destaques}\n\n"
+        "OBRIGATORIO: cite pelo nome pelo menos um jogador dos destaques acima "
+        "e explique por que foi reach ou roubo comparado ao ADP. Nao fique so "
+        "no genérico/nostalgico - traga os nomes e os numeros do ADP.\n\n"
         "Escreva um paragrafo curto (no maximo 4 linhas), em portugues do "
-        "Brasil, no seu estilo debochado e nostalgico. So o paragrafo, sem "
-        "introducao, sem aspas."
+        "Brasil, na primeira pessoa como o Tom Brady, saudosista e nostalgico "
+        "dos seus titulos, mas citando os jogadores especificos. So o "
+        "paragrafo, sem introducao, sem aspas."
     )
 
     try:

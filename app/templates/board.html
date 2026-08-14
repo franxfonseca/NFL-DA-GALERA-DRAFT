@@ -34,9 +34,13 @@
             <div id="rev-info" class="revelacao-info"></div>
             <div id="rev-veredito" class="revelacao-veredito"></div>
         </div>
-        <div id="rev-resumo-rodada" class="resumo-rodada">
-            <div class="resumo-rodada-titulo">RODADA <span id="resumo-rodada-numero"></span> COMPLETA</div>
-            <div id="resumo-rodada-texto" class="resumo-rodada-texto"></div>
+    </div>
+
+    <div id="comentarista">
+        <img src="{{ url_for('static', filename='img/tom_brady.png') }}" alt="Comentarista">
+        <div class="balao">
+            <div class="balao-titulo">Análise da rodada <span id="comentarista-rodada"></span></div>
+            <div id="comentarista-texto" class="balao-texto"></div>
         </div>
     </div>
 

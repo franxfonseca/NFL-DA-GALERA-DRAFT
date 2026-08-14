@@ -91,20 +91,21 @@ function criarCardPick(pick) {
 
 function registrarComentariosRodada(picks) {
     for (const pick of picks) {
-        if (pick.fim_de_rodada && pick.comentario_rodada) {
+        if (pick.fim_de_rodada && pick.comentario_rodada && !comentariosRodada[pick.rodada]) {
             comentariosRodada[pick.rodada] = pick.comentario_rodada;
+            // atualiza o rodape fixo assim que a IA responde, sem depender
+            // do operador ter visto (ou nao) a tela cheia de revelacao
+            atualizarComentarista(pick.rodada, pick.comentario_rodada);
         }
     }
 }
 
-async function esperarResumoRodada(rodada) {
-    // a IA costuma responder em ~1s, mas da mais algumas chances antes de
-    // desistir - se nao chegar a tempo, essa rodada so fica sem resumo
-    for (let tentativa = 0; tentativa < 6; tentativa++) {
-        if (comentariosRodada[rodada]) return comentariosRodada[rodada];
-        await esperar(500);
-    }
-    return comentariosRodada[rodada] || null;
+function atualizarComentarista(rodada, texto) {
+    document.getElementById("comentarista-rodada").textContent = rodada;
+    document.getElementById("comentarista-texto").textContent = texto;
+    // so aparece quando o 1o comentario chega (fim da rodada 1) - antes disso
+    // fica escondido, nao faz sentido mostrar o rodape vazio desde o pick 1
+    document.getElementById("comentarista").classList.add("mostrar");
 }
 
 function atualizarCabecalhos(times) {
@@ -184,10 +185,6 @@ async function revelarPick(pick) {
     const nomeEl = document.getElementById("rev-nome");
     const infoEl = document.getElementById("rev-info");
     const veredictoEl = document.getElementById("rev-veredito");
-    const resumoEl = document.getElementById("rev-resumo-rodada");
-    const resumoNumeroEl = document.getElementById("resumo-rodada-numero");
-    const resumoTextoEl = document.getElementById("resumo-rodada-texto");
-
     // reseta o visual de uma revelacao anterior antes de comecar essa
     foto.classList.remove("revelada");
     nomeEl.classList.remove("mostrar");
@@ -195,8 +192,6 @@ async function revelarPick(pick) {
     veredictoEl.classList.remove("mostrar");
     veredictoEl.className = "revelacao-veredito";
     veredictoEl.textContent = "";
-    resumoEl.classList.remove("mostrar");
-    resumoTextoEl.textContent = "";
 
     numeroPick.textContent = pick.pick;
     foto.src = `/img/players/${pick.player_id}.png`;
@@ -230,19 +225,9 @@ async function revelarPick(pick) {
 
     await esperar(2000);
 
-    // se for o ultimo pick da rodada, espera a analise da IA sobre a rodada
-    // inteira e mostra por cima do resto - senao, segue direto pro fechamento
-    if (pick.fim_de_rodada) {
-        const resumo = pick.comentario_rodada || (await esperarResumoRodada(pick.rodada));
-        if (resumo) {
-            resumoNumeroEl.textContent = pick.rodada;
-            resumoTextoEl.textContent = resumo;
-            resumoEl.classList.add("mostrar");
-            await esperar(6000); // paragrafo e mais longo, precisa de mais tempo de leitura
-            resumoEl.classList.remove("mostrar");
-            await esperar(400);
-        }
-    }
+    // o resumo da rodada nao aparece em tela cheia - so no rodape fixo
+    // (#comentarista), atualizado em segundo plano por registrarComentariosRodada.
+    // Isso nao trava nem estende a coreografia desse pick.
 
     overlay.classList.remove("ativa");
     await esperar(300); // da tempo do fade out antes do proximo pick comecar
