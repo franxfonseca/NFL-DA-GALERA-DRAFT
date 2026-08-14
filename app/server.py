@@ -11,7 +11,8 @@ rota - o board nao sabe (nem precisa saber) de onde o pick veio.
 Rotas:
     GET  /            - board pra jogar no projetor
     GET  /control      - painel do operador (modo manual)
-    GET  /estado        - estado atual do draft, em JSON (o board da polling nisso)
+    GET  /stream        - SSE: manda o estado toda vez que muda (etapa 6)
+    GET  /estado        - estado atual do draft, em JSON (fallback/debug manual)
     POST /pick          - registra um pick. Body JSON: {"nome": "..."} ou {"player_id": "..."}
     POST /desfazer       - remove o ultimo pick (engano do operador)
     POST /reset          - zera o draft inteiro
@@ -23,11 +24,12 @@ Uso:
 """
 
 import json
+import queue
 import re
 import time
 from pathlib import Path
 
-from flask import Flask, abort, jsonify, render_template, request, send_from_directory
+from flask import Flask, Response, abort, jsonify, render_template, request, send_from_directory
 
 BASE = Path(__file__).parent.parent
 DATA = BASE / "data"
@@ -78,6 +80,19 @@ estado.setdefault("times", {})  # {"1": {"nome_time": "...", "dono": "..."}, ...
 
 def salvar_estado() -> None:
     ARQUIVO_ESTADO.write_text(json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8")
+    notificar_ouvintes()
+
+
+# uma fila por cliente conectado em /stream (SSE). Toda mudanca de estado
+# manda o estado inteiro pra cada fila - e pouca coisa (no maximo 192 picks),
+# nao vale a pena complicar mandando so a diferenca.
+_ouvintes: list[queue.Queue] = []
+
+
+def notificar_ouvintes() -> None:
+    dados = json.dumps(estado, ensure_ascii=False)
+    for fila in _ouvintes:
+        fila.put(dados)
 
 
 def calcular_rodada_e_slot(numero_pick: int) -> tuple[int, int]:
@@ -192,6 +207,29 @@ def get_estado():
     return jsonify(estado)
 
 
+@app.route("/stream")
+def stream():
+    """SSE: manda o estado toda vez que muda, sem o board precisar perguntar
+    (polling). ETAPA 6 - antes disso o board dava fetch em /estado a cada 1.5s."""
+    fila: queue.Queue = queue.Queue()
+    _ouvintes.append(fila)
+
+    def gerar():
+        try:
+            # manda o estado atual assim que conecta, antes de esperar qualquer mudanca
+            yield f"data: {json.dumps(estado, ensure_ascii=False)}\n\n"
+            while True:
+                try:
+                    dados = fila.get(timeout=15)
+                    yield f"data: {dados}\n\n"
+                except queue.Empty:
+                    yield ": heartbeat\n\n"  # mantem a conexao viva
+        finally:
+            _ouvintes.remove(fila)
+
+    return Response(gerar(), mimetype="text/event-stream")
+
+
 @app.route("/times", methods=["POST"])
 def salvar_times():
     """Edita nome do time e/ou dono de um slot. Body: {"slot": 1, "nome_time": "...", "dono": "..."}"""
@@ -289,4 +327,7 @@ def img_logo(sigla):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # threaded=True e obrigatorio: sem isso, a conexao aberta de /stream
+    # (SSE) trava o unico worker do servidor de desenvolvimento e nada mais
+    # responde (nem o POST /pick) enquanto o board estiver conectado.
+    app.run(host="0.0.0.0", port=5000, debug=True, threaded=True)
