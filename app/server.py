@@ -45,6 +45,7 @@ def carregar_json(nome_arquivo: str) -> dict:
 
 JOGADORES = carregar_json("players.json")
 TIMES_NFL = carregar_json("teams.json")
+ADP = carregar_json("adp.json")
 
 
 def normalizar(texto: str) -> str:
@@ -103,6 +104,31 @@ def buscar_jogador_por_nome(nome_digitado: str) -> tuple[dict | None, str | None
         return None, f"nome ambiguo, digite mais completo: {', '.join(nomes[:6])}"
 
     return buscar_jogador_por_id(ids[0]), None
+
+
+def buscar_candidatos(texto_digitado: str, limite: int = 8) -> list[dict]:
+    """Pra alimentar o autocomplete do painel: todos os jogadores cujo nome
+    contem o texto digitado, ordenados por ADP (melhor jogador primeiro)."""
+    chave = normalizar(texto_digitado)
+    if not chave:
+        return []
+
+    ids = {
+        jid
+        for chave_catalogo, lista_ids in INDICE_NOMES.items()
+        if chave in chave_catalogo
+        for jid in lista_ids
+    }
+
+    candidatos = [buscar_jogador_por_id(jid) for jid in ids]
+    candidatos.sort(key=lambda j: ADP.get(j["id"], 9999))
+    return candidatos[:limite]
+
+
+@app.route("/buscar")
+def buscar():
+    texto = request.args.get("q", "")
+    return jsonify({"resultados": buscar_candidatos(texto)})
 
 
 @app.route("/")
