@@ -1,7 +1,7 @@
-// ETAPA 3: board ainda usa polling simples. SSE entra na etapa 6.
 // ETAPA 4: coreografia de revelacao (~5s por pick) + TTS + reach/steal.
+// ETAPA 6: SSE (/stream) no lugar do polling em /estado - o board so
+// atualiza quando o servidor manda, sem ficar perguntando toda hora.
 
-const INTERVALO_MS = 1500;
 let ultimoEstadoTexto = "";
 let picksConhecidos = null; // null = board ainda nao carregou pela 1a vez
 
@@ -218,45 +218,49 @@ async function processarFila() {
     revelando = false;
 }
 
-async function atualizar() {
-    try {
-        const resposta = await fetch("/estado");
-        const estado = await resposta.json();
+function processarEstado(estado) {
+    atualizarCabecalhos(estado.times || {});
 
-        atualizarCabecalhos(estado.times || {});
-
-        if (picksConhecidos === null) {
-            // 1a carga da pagina - mostra o que ja existe direto, sem coreografia
-            redesenharBoard(estado.picks);
-            picksConhecidos = estado.picks.length;
-            ultimoEstadoTexto = JSON.stringify(estado.picks);
-            return;
-        }
-
-        const estadoTexto = JSON.stringify(estado.picks);
-        if (estadoTexto === ultimoEstadoTexto) {
-            return;
-        }
-        ultimoEstadoTexto = estadoTexto;
-
-        if (estado.picks.length < picksConhecidos) {
-            // desfazer ou reset - redesenha tudo direto, sem fila de revelacao
-            filaRevelacao.length = 0;
-            redesenharBoard(estado.picks);
-            picksConhecidos = estado.picks.length;
-            return;
-        }
-
-        // picks novos - entram na fila e sao revelados um de cada vez
-        const novos = estado.picks.slice(picksConhecidos);
-        filaRevelacao.push(...novos);
+    if (picksConhecidos === null) {
+        // 1a carga da pagina - mostra o que ja existe direto, sem coreografia
+        redesenharBoard(estado.picks);
         picksConhecidos = estado.picks.length;
-        processarFila();
-    } catch (erro) {
-        // regra do projeto: falha aqui nao pode aparecer na tela do projetor
-        console.error("falha ao buscar /estado:", erro);
+        ultimoEstadoTexto = JSON.stringify(estado.picks);
+        return;
     }
+
+    const estadoTexto = JSON.stringify(estado.picks);
+    if (estadoTexto === ultimoEstadoTexto) {
+        return;
+    }
+    ultimoEstadoTexto = estadoTexto;
+
+    if (estado.picks.length < picksConhecidos) {
+        // desfazer ou reset - redesenha tudo direto, sem fila de revelacao
+        filaRevelacao.length = 0;
+        redesenharBoard(estado.picks);
+        picksConhecidos = estado.picks.length;
+        return;
+    }
+
+    // picks novos - entram na fila e sao revelados um de cada vez
+    const novos = estado.picks.slice(picksConhecidos);
+    filaRevelacao.push(...novos);
+    picksConhecidos = estado.picks.length;
+    processarFila();
 }
 
-atualizar();
-setInterval(atualizar, INTERVALO_MS);
+// EventSource reconecta sozinho se a conexao cair (comportamento padrao do
+// navegador) - nao precisa de logica extra pra isso. Regra do projeto: um
+// pick que nao chegou por causa da rede nunca pode travar o resto do show.
+const fonte = new EventSource("/stream");
+fonte.onmessage = (evento) => {
+    try {
+        processarEstado(JSON.parse(evento.data));
+    } catch (erro) {
+        console.error("falha ao processar estado do /stream:", erro);
+    }
+};
+fonte.onerror = (erro) => {
+    console.error("conexao SSE caiu, navegador vai tentar reconectar sozinho:", erro);
+};
