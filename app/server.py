@@ -61,8 +61,19 @@ for _id, _info in JOGADORES.items():
     INDICE_NOMES.setdefault(_chave, []).append(_id)
 
 
-# Estado do draft inteiro mora aqui, em memoria. Reinicia o processo, reinicia o draft.
-estado = {"picks": []}
+# Estado do draft inteiro mora em memoria, mas e salvo em disco a cada mudanca.
+# Sem isso, um restart do processo (ate um reload do modo debug) apaga o draft
+# inteiro - ja aconteceu durante o desenvolvimento e seria bem pior ao vivo.
+ARQUIVO_ESTADO = BASE / "app" / "estado_draft.json"
+
+if ARQUIVO_ESTADO.exists():
+    estado = json.loads(ARQUIVO_ESTADO.read_text(encoding="utf-8"))
+else:
+    estado = {"picks": []}
+
+
+def salvar_estado() -> None:
+    ARQUIVO_ESTADO.write_text(json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def calcular_rodada_e_slot(numero_pick: int) -> tuple[int, int]:
@@ -183,6 +194,7 @@ def registrar_pick():
         "ts": time.time(),
     }
     estado["picks"].append(pick)
+    salvar_estado()
     return jsonify({"ok": True, "pick": pick})
 
 
@@ -191,12 +203,14 @@ def desfazer():
     if not estado["picks"]:
         return jsonify({"ok": False, "erro": "nenhum pick pra desfazer"}), 400
     removido = estado["picks"].pop()
+    salvar_estado()
     return jsonify({"ok": True, "removido": removido})
 
 
 @app.route("/reset", methods=["POST"])
 def resetar():
     estado["picks"] = []
+    salvar_estado()
     return jsonify({"ok": True})
 
 
