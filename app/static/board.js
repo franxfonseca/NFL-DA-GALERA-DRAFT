@@ -59,9 +59,15 @@ document.getElementById("btn-desbloquear").addEventListener("click", () => {
 const filaRevelacao = [];
 let revelando = false;
 
+// ETAPA 7: comentario da IA chega depois (a chamada roda em segundo plano no
+// servidor) - pode ser antes ou depois do card ja estar na coluna. Guardamos
+// aqui pra nao depender de qual chegou primeiro.
+const comentariosConhecidos = {}; // numero do pick -> texto
+
 function criarCardPick(pick) {
     const card = document.createElement("div");
     card.className = "pick-card";
+    card.dataset.pick = pick.pick;
     card.style.setProperty("--cor-time", pick.cor_time);
 
     const img = document.createElement("img");
@@ -81,7 +87,40 @@ function criarCardPick(pick) {
     rodada.textContent = `Rodada ${pick.rodada} - Pick ${pick.pick}`;
 
     card.append(img, nome, info, rodada);
+
+    const comentario = pick.comentario_ia || comentariosConhecidos[pick.pick];
+    if (comentario) {
+        card.appendChild(criarComentario(comentario));
+    }
+
     return card;
+}
+
+function criarComentario(texto) {
+    const div = document.createElement("div");
+    div.className = "comentario";
+    div.textContent = texto;
+    return div;
+}
+
+function registrarComentarios(picks) {
+    for (const pick of picks) {
+        if (pick.comentario_ia) {
+            comentariosConhecidos[pick.pick] = pick.comentario_ia;
+        }
+    }
+}
+
+function aplicarComentariosPendentes() {
+    // pega cards que ja estao na tela mas ainda nao tinham comentario quando
+    // foram criados - acontece quando a IA demora mais que a coreografia
+    document.querySelectorAll(".pick-card").forEach((card) => {
+        if (card.querySelector(".comentario")) return;
+        const texto = comentariosConhecidos[card.dataset.pick];
+        if (texto) {
+            card.appendChild(criarComentario(texto));
+        }
+    });
 }
 
 function atualizarCabecalhos(times) {
@@ -161,6 +200,7 @@ async function revelarPick(pick) {
     const nomeEl = document.getElementById("rev-nome");
     const infoEl = document.getElementById("rev-info");
     const veredictoEl = document.getElementById("rev-veredito");
+    const comentarioEl = document.getElementById("rev-comentario");
 
     // reseta o visual de uma revelacao anterior antes de comecar essa
     foto.classList.remove("revelada");
@@ -169,6 +209,8 @@ async function revelarPick(pick) {
     veredictoEl.classList.remove("mostrar");
     veredictoEl.className = "revelacao-veredito";
     veredictoEl.textContent = "";
+    comentarioEl.classList.remove("mostrar");
+    comentarioEl.textContent = "";
 
     numeroPick.textContent = pick.pick;
     foto.src = `/img/players/${pick.player_id}.png`;
@@ -200,7 +242,15 @@ async function revelarPick(pick) {
     }
     veredictoEl.classList.add("mostrar");
 
-    // ~2s: espaco reservado pro comentario da IA (entra na etapa 7)
+    // ~2s: comentario da IA, se ja tiver chegado a essa altura (rodou em
+    // segundo plano desde que o pick foi registrado). Se nao chegou ainda,
+    // essa pausa fica so no silencio - o comentario ainda pode aparecer
+    // depois, direto no card, quando a resposta da IA voltar.
+    const comentario = pick.comentario_ia || comentariosConhecidos[pick.pick];
+    if (comentario) {
+        comentarioEl.textContent = comentario;
+        comentarioEl.classList.add("mostrar");
+    }
     await esperar(2000);
 
     overlay.classList.remove("ativa");
@@ -220,6 +270,8 @@ async function processarFila() {
 
 function processarEstado(estado) {
     atualizarCabecalhos(estado.times || {});
+    registrarComentarios(estado.picks);
+    aplicarComentariosPendentes();
 
     if (picksConhecidos === null) {
         // 1a carga da pagina - mostra o que ja existe direto, sem coreografia

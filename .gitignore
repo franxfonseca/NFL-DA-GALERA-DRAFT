@@ -18,3 +18,6 @@ app/estado_draft.json
 
 # screenshots de diagnostico do watcher - so pra debug local
 capture/diag_shots/
+
+# chave de API - nunca vai pro repo
+.env

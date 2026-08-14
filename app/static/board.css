@@ -95,6 +95,17 @@ html, body {
     color: #6b7385;
 }
 
+.pick-card .comentario {
+    font-size: 0.62vw;
+    color: #d8c98a;
+    font-style: italic;
+    text-align: center;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid #2a3142;
+    animation: entrada 0.4s ease-out;
+}
+
 @keyframes entrada {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -234,6 +245,20 @@ html, body {
 .revelacao-veredito.mostrar {
     opacity: 1;
     transform: translateY(0);
+}
+
+.revelacao-comentario {
+    font-size: 1.3vw;
+    font-style: italic;
+    color: #d8c98a;
+    max-width: 40vw;
+    margin: 1.2vw auto 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.revelacao-comentario.mostrar {
+    opacity: 1;
 }
 
 .revelacao-veredito.roubo { color: #ffb703; }
