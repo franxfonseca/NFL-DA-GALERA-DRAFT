@@ -15,3 +15,6 @@ data/img/logos/*
 
 # estado do draft em andamento - runtime, nao codigo
 app/estado_draft.json
+
+# screenshots de diagnostico do watcher - so pra debug local
+capture/diag_shots/
