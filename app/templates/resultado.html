@@ -62,7 +62,10 @@
         display: flex;
         flex-direction: column;
         gap: 0.4vw;
+        cursor: pointer;
     }
+    .card-time:hover { border-color: #444d63; }
+    .card-time.aberto { border-color: #d8c98a; }
 
     .card-time .cabecalho {
         display: flex;
@@ -107,6 +110,42 @@
     .btn-ouvir:hover { border-color: #d8c98a; }
     .btn-ouvir.falando { background: #d8c98a; color: #0b0e14; }
 
+    .brady-mini {
+        width: 2vw;
+        height: 2vw;
+        min-width: 28px;
+        min-height: 28px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #d8c98a;
+        flex-shrink: 0;
+    }
+
+    .grupo-ouvir {
+        display: flex;
+        align-items: center;
+        gap: 0.4vw;
+        flex-shrink: 0;
+    }
+
+    .elenco {
+        margin-top: 0.4vw;
+        padding-top: 0.5vw;
+        border-top: 1px solid #2a3142;
+        display: none;
+        flex-direction: column;
+        gap: 0.2vw;
+    }
+    .card-time.aberto .elenco { display: flex; }
+
+    .elenco .jogador {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.78vw;
+        color: #ccc;
+    }
+    .elenco .jogador .pos { color: #a0a8bd; }
+
     .oculto { display: none; }
 </style>
 </head>
@@ -118,7 +157,10 @@
 
     <div id="conteudo" class="oculto">
         <div id="resumo-geral">
-            <button class="btn-ouvir" id="btn-ouvir-resumo" title="Ouvir resumo geral">🔊</button>
+            <div class="grupo-ouvir">
+                <img class="brady-mini" src="{{ url_for('static', filename='img/tom_brady.png') }}" alt="Tom Brady">
+                <button class="btn-ouvir" id="btn-ouvir-resumo" title="Ouvir resumo geral">🔊</button>
+            </div>
             <p id="resumo-geral-texto"></p>
         </div>
         <div id="grade-times"></div>
@@ -201,20 +243,53 @@
                 const rodape = document.createElement("div");
                 rodape.className = "rodape";
 
+                const grupoOuvir = document.createElement("div");
+                grupoOuvir.className = "grupo-ouvir";
+
+                const foto = document.createElement("img");
+                foto.className = "brady-mini";
+                foto.src = "{{ url_for('static', filename='img/tom_brady.png') }}";
+                foto.alt = "Tom Brady";
+
                 const botao = document.createElement("button");
                 botao.className = "btn-ouvir";
                 botao.title = `Ouvir sobre ${nomeTime}`;
                 botao.textContent = "🔊";
                 botao.onclick = (evento) => {
+                    evento.stopPropagation(); // nao expande/colapsa o elenco ao clicar em ouvir
                     falar(`${nomeTime}, nota ${dados.nota}. ${dados.comentario || ""}`, evento.currentTarget);
                 };
+
+                grupoOuvir.append(foto, botao);
 
                 const comentario = document.createElement("div");
                 comentario.className = "comentario";
                 comentario.textContent = dados.comentario || "";
 
-                rodape.append(botao, comentario);
-                card.append(cabecalho, rodape);
+                rodape.append(grupoOuvir, comentario);
+
+                // elenco do time - jogador e posicao, na ordem que foram draftados
+                const picksDoTime = (estado.picks || [])
+                    .filter((p) => String(p.slot) === slot)
+                    .sort((a, b) => a.pick - b.pick);
+
+                const elenco = document.createElement("div");
+                elenco.className = "elenco";
+                for (const p of picksDoTime) {
+                    const linha = document.createElement("div");
+                    linha.className = "jogador";
+                    const nomeJogador = document.createElement("span");
+                    nomeJogador.textContent = `R${p.rodada} - ${p.nome}`;
+                    const pos = document.createElement("span");
+                    pos.className = "pos";
+                    pos.textContent = `${p.posicao} - ${p.time_nfl}`;
+                    linha.append(nomeJogador, pos);
+                    elenco.appendChild(linha);
+                }
+
+                card.addEventListener("click", () => card.classList.toggle("aberto"));
+
+                card.append(cabecalho, rodape, elenco);
                 grade.appendChild(card);
             }
         }
