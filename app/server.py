@@ -11,6 +11,7 @@ rota - o board nao sabe (nem precisa saber) de onde o pick veio.
 Rotas:
     GET  /            - redireciona pra /home
     GET  /home         - tela de abertura, Brady dando as boas-vindas
+    GET  /comando       - indice com link pra cada pagina, abre em nova guia
     GET  /board        - board pra jogar no projetor
     GET  /control      - painel do operador (modo manual)
     GET  /resultado     - tela de analise final (etapa 8), pos-draft
@@ -407,6 +408,11 @@ def raiz():
 @app.route("/home")
 def home():
     return render_template("home.html")
+
+
+@app.route("/comando")
+def comando():
+    return render_template("comando.html")
 
 
 @app.route("/board")

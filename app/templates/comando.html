@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Draft Night - Comando</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+        width: 100%;
+        min-height: 100%;
+        background: #0b0e14;
+        color: #f2f2f2;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 6vh 4vw;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+        letter-spacing: 0.1em;
+        color: #d8c98a;
+        margin-bottom: 8px;
+    }
+
+    p.sub {
+        color: #a0a8bd;
+        margin-bottom: 40px;
+    }
+
+    #lista {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 16px;
+        width: 100%;
+        max-width: 900px;
+    }
+
+    a.card {
+        display: block;
+        background: #12161f;
+        border: 2px solid #2a3142;
+        border-radius: 10px;
+        padding: 20px;
+        text-decoration: none;
+        color: #f2f2f2;
+        transition: border-color 0.2s ease;
+    }
+    a.card:hover { border-color: #d8c98a; }
+
+    a.card .titulo {
+        font-size: 1.15rem;
+        font-weight: bold;
+        margin-bottom: 6px;
+    }
+
+    a.card .descricao {
+        font-size: 0.85rem;
+        color: #a0a8bd;
+        line-height: 1.4;
+    }
+</style>
+</head>
+<body>
+    <h1>PAINEL DE COMANDO</h1>
+    <p class="sub">Clique numa página para abrir em outra guia.</p>
+
+    <div id="lista">
+        <a class="card" href="/home" target="_blank">
+            <div class="titulo">🏈 Home</div>
+            <div class="descricao">Tela de abertura com as boas-vindas do Tom Brady.</div>
+        </a>
+
+        <a class="card" href="/board" target="_blank">
+            <div class="titulo">📺 Board</div>
+            <div class="descricao">Tela cheia pro projetor/TV - onde o draft acontece ao vivo.</div>
+        </a>
+
+        <a class="card" href="/control" target="_blank">
+            <div class="titulo">🎛️ Controle</div>
+            <div class="descricao">Painel do operador - modo manual, nomes dos times, finalizar draft.</div>
+        </a>
+
+        <a class="card" href="/comentarios" target="_blank">
+            <div class="titulo">💬 Comentários por rodada</div>
+            <div class="descricao">Reveja as falas do Tom Brady de cada rodada já concluída.</div>
+        </a>
+
+        <a class="card" href="/resultado" target="_blank">
+            <div class="titulo">🏆 Resultado final</div>
+            <div class="descricao">Nota e análise por time, gerada quando o draft é finalizado.</div>
+        </a>
+    </div>
+</body>
+</html>
