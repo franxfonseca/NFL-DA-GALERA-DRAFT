@@ -7,20 +7,19 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
         width: 100%;
-        height: 100%;
+        min-height: 100%;
         background: #0b0e14;
         color: #f2f2f2;
         font-family: "Segoe UI", Arial, sans-serif;
-        overflow: hidden;
     }
-    body { display: flex; flex-direction: column; }
+    body { padding: 3vh 3vw; }
 
     h1 {
-        font-size: 2vw;
+        font-size: 2.2vw;
         text-align: center;
         letter-spacing: 0.1em;
         color: #d8c98a;
-        padding: 2vh 0 1vh;
+        margin-bottom: 2vh;
     }
 
     #estado-vazio, #estado-gerando {
@@ -30,32 +29,39 @@
         color: #a0a8bd;
     }
 
+    #resumo-geral {
+        max-width: 60vw;
+        margin: 0 auto 4vh;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6vw;
+    }
+
+    #resumo-geral p {
+        font-size: 1.2vw;
+        font-style: italic;
+        color: #ccc;
+        line-height: 1.5;
+    }
+
     #grade-times {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 1vw;
-        max-width: 92vw;
+        gap: 1.2vw;
+        max-width: 90vw;
         margin: 0 auto;
-        padding-bottom: 1vh;
-        flex: 1;
-        min-height: 0;
     }
 
     .card-time {
         background: #12161f;
         border: 2px solid #2a3142;
         border-radius: 10px;
-        padding: 0.8vw;
+        padding: 1vw;
         display: flex;
         flex-direction: column;
-        gap: 0.3vw;
-        opacity: 0.15;
-        transition: opacity 0.5s ease, border-color 0.5s ease;
-    }
-
-    .card-time.revelado {
-        opacity: 1;
-        border-color: #d8c98a;
+        gap: 0.4vw;
     }
 
     .card-time .cabecalho {
@@ -64,10 +70,17 @@
         align-items: center;
     }
 
-    .card-time .nome { font-size: 1vw; font-weight: bold; }
-    .card-time .dono { font-size: 0.75vw; color: #a0a8bd; }
+    .card-time .nome { font-size: 1.05vw; font-weight: bold; }
+    .card-time .dono { font-size: 0.8vw; color: #a0a8bd; }
     .card-time .nota { font-size: 1.8vw; font-weight: 900; }
-    .card-time .comentario { font-size: 0.78vw; color: #ccc; line-height: 1.35; }
+
+    .card-time .rodape {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5vw;
+    }
+
+    .card-time .comentario { font-size: 0.85vw; color: #ccc; line-height: 1.4; flex: 1; }
 
     .nota-a { color: #4caf50; }
     .nota-b { color: #8bc34a; }
@@ -75,128 +88,72 @@
     .nota-d { color: #ff9800; }
     .nota-f { color: #e63946; }
 
-    /* rodape do Tom Brady narrando, igual ao board */
-    #comentarista {
-        display: none;
-        align-items: center;
-        gap: 1vw;
-        height: 22vh;
-        padding: 0.8vw 1.5vw;
-        background: #12161f;
-        border-top: 2px solid #2a3142;
-    }
-    #comentarista.mostrar { display: flex; }
-    #comentarista img {
-        height: 100%;
-        aspect-ratio: 1 / 1;
-        object-fit: cover;
-        border-radius: 50%;
-        border: 3px solid #d8c98a;
-        flex-shrink: 0;
-    }
-    .balao {
-        position: relative;
+    .btn-ouvir {
         background: #1b2130;
         border: 2px solid #2a3142;
-        border-radius: 12px;
-        padding: 0.6vw 1.2vw;
-        flex: 1;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-    .balao::before {
-        content: "";
-        position: absolute;
-        left: -14px;
-        top: 50%;
-        transform: translateY(-50%);
-        border: 10px solid transparent;
-        border-right-color: #2a3142;
-    }
-    .balao::after {
-        content: "";
-        position: absolute;
-        left: -10px;
-        top: 50%;
-        transform: translateY(-50%);
-        border: 8px solid transparent;
-        border-right-color: #1b2130;
-    }
-    .balao-titulo { font-size: 0.8vw; color: #a0a8bd; letter-spacing: 0.05em; margin-bottom: 0.2vw; }
-    .balao-texto { font-size: 1.15vw; line-height: 1.4; }
-
-    /* tela de desbloqueio de audio */
-    #desbloquear {
-        position: fixed;
-        inset: 0;
-        background: #0b0e14;
+        border-radius: 50%;
+        width: 2vw;
+        height: 2vw;
+        min-width: 28px;
+        min-height: 28px;
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 200;
-    }
-    #desbloquear.oculto { display: none; }
-    #btn-desbloquear {
-        font-size: 1.6vw;
-        padding: 1vw 2vw;
-        background: #2e7d32;
-        color: #fff;
-        border: none;
-        border-radius: 12px;
         cursor: pointer;
-        font-weight: bold;
+        font-size: 1vw;
+        flex-shrink: 0;
+        color: #d8c98a;
     }
+    .btn-ouvir:hover { border-color: #d8c98a; }
+    .btn-ouvir.falando { background: #d8c98a; color: #0b0e14; }
 
     .oculto { display: none; }
 </style>
 </head>
 <body>
-    <div id="desbloquear">
-        <button id="btn-desbloquear">🔊 Clique pra iniciar a revelação</button>
-    </div>
-
     <h1>ANÁLISE FINAL DO DRAFT</h1>
 
     <div id="estado-vazio" class="oculto">O draft ainda não foi finalizado. Vá em /control e clique em "Finalizar draft".</div>
     <div id="estado-gerando" class="oculto">Gerando análise final, um momento...</div>
 
-    <div id="grade-times" class="oculto"></div>
-
-    <div id="comentarista">
-        <img src="{{ url_for('static', filename='img/tom_brady.png') }}" alt="Tom Brady">
-        <div class="balao">
-            <div class="balao-titulo" id="comentarista-titulo">Análise final</div>
-            <div id="comentarista-texto" class="balao-texto"></div>
+    <div id="conteudo" class="oculto">
+        <div id="resumo-geral">
+            <button class="btn-ouvir" id="btn-ouvir-resumo" title="Ouvir resumo geral">🔊</button>
+            <p id="resumo-geral-texto"></p>
         </div>
+        <div id="grade-times"></div>
     </div>
 
     <script>
-        let audioLiberado = false;
+        // fala so quando o operador clica no icone - nunca sozinho
         let vozEscolhida = null;
-        let jaRevelado = false; // evita revelar de novo se o SSE reenviar o mesmo estado
+        let botaoFalando = null;
 
-        document.getElementById("btn-desbloquear").addEventListener("click", () => {
-            audioLiberado = true;
+        function pegarVoz() {
+            if (vozEscolhida) return vozEscolhida;
             vozEscolhida = speechSynthesis.getVoices().find((v) => v.lang.startsWith("pt")) || null;
-            document.getElementById("desbloquear").classList.add("oculto");
-        });
+            return vozEscolhida;
+        }
 
-        function falar(texto) {
-            if (!audioLiberado) return;
+        function falar(texto, botao) {
             try {
+                speechSynthesis.cancel(); // corta qualquer fala anterior antes de comecar essa
+                if (botaoFalando) botaoFalando.classList.remove("falando");
+
                 const utter = new SpeechSynthesisUtterance(texto);
                 utter.lang = "pt-BR";
-                if (vozEscolhida) utter.voice = vozEscolhida;
+                const voz = pegarVoz();
+                if (voz) utter.voice = voz;
+
+                botao.classList.add("falando");
+                botaoFalando = botao;
+                utter.onend = () => botao.classList.remove("falando");
+                utter.onerror = () => botao.classList.remove("falando");
+
                 speechSynthesis.speak(utter);
             } catch (erro) {
                 console.error("falha no TTS:", erro);
             }
-        }
-
-        function esperar(ms) {
-            return new Promise((resolve) => setTimeout(resolve, ms));
         }
 
         function corDaNota(nota) {
@@ -205,25 +162,32 @@
         }
 
         function montarGrade(estado) {
+            const analise = estado.analise_final;
+
+            document.getElementById("resumo-geral-texto").textContent = analise.resumo_geral || "";
+            document.getElementById("btn-ouvir-resumo").onclick = (evento) => {
+                falar(analise.resumo_geral || "", evento.currentTarget);
+            };
+
             const grade = document.getElementById("grade-times");
             grade.innerHTML = "";
-            const times = estado.analise_final.times || {};
+            const times = analise.times || {};
             const slots = Object.keys(times).sort((a, b) => Number(a) - Number(b));
 
             for (const slot of slots) {
                 const dados = times[slot];
                 const infoTime = (estado.times || {})[slot] || {};
+                const nomeTime = infoTime.nome_time || `Time ${slot}`;
 
                 const card = document.createElement("div");
                 card.className = "card-time";
-                card.dataset.slot = slot;
 
                 const cabecalho = document.createElement("div");
                 cabecalho.className = "cabecalho";
                 const nomeWrap = document.createElement("div");
                 const nome = document.createElement("div");
                 nome.className = "nome";
-                nome.textContent = infoTime.nome_time || `Time ${slot}`;
+                nome.textContent = nomeTime;
                 const dono = document.createElement("div");
                 dono.className = "dono";
                 dono.textContent = infoTime.dono || "";
@@ -234,80 +198,51 @@
                 nota.textContent = dados.nota || "?";
                 cabecalho.append(nomeWrap, nota);
 
+                const rodape = document.createElement("div");
+                rodape.className = "rodape";
+
+                const botao = document.createElement("button");
+                botao.className = "btn-ouvir";
+                botao.title = `Ouvir sobre ${nomeTime}`;
+                botao.textContent = "🔊";
+                botao.onclick = (evento) => {
+                    falar(`${nomeTime}, nota ${dados.nota}. ${dados.comentario || ""}`, evento.currentTarget);
+                };
+
                 const comentario = document.createElement("div");
                 comentario.className = "comentario";
                 comentario.textContent = dados.comentario || "";
 
-                card.append(cabecalho, comentario);
+                rodape.append(botao, comentario);
+                card.append(cabecalho, rodape);
                 grade.appendChild(card);
             }
-        }
-
-        async function narrarResultado(estado) {
-            const comentarista = document.getElementById("comentarista");
-            const titulo = document.getElementById("comentarista-titulo");
-            const texto = document.getElementById("comentarista-texto");
-            const analise = estado.analise_final;
-
-            comentarista.classList.add("mostrar");
-
-            // intro: resumo geral
-            titulo.textContent = "Resumo geral";
-            texto.textContent = analise.resumo_geral || "";
-            falar(analise.resumo_geral || "");
-            await esperar(6000);
-
-            // um time de cada vez, na ordem dos slots
-            const times = analise.times || {};
-            const slots = Object.keys(times).sort((a, b) => Number(a) - Number(b));
-
-            for (const slot of slots) {
-                const dados = times[slot];
-                const infoTime = (estado.times || {})[slot] || {};
-                const nomeTime = infoTime.nome_time || `Time ${slot}`;
-
-                const card = document.querySelector(`.card-time[data-slot="${slot}"]`);
-                if (card) card.classList.add("revelado");
-
-                titulo.textContent = `${nomeTime} - nota ${dados.nota}`;
-                texto.textContent = dados.comentario || "";
-                falar(`${nomeTime}, nota ${dados.nota}. ${dados.comentario || ""}`);
-                await esperar(5000);
-            }
-
-            titulo.textContent = "Análise completa";
-            texto.textContent = "Essa foi a análise da noite. Boa temporada pra todos!";
         }
 
         function renderizar(estado) {
             const vazio = document.getElementById("estado-vazio");
             const gerando = document.getElementById("estado-gerando");
-            const grade = document.getElementById("grade-times");
+            const conteudo = document.getElementById("conteudo");
 
             if (estado.gerando_analise_final) {
                 vazio.classList.add("oculto");
                 gerando.classList.remove("oculto");
-                grade.classList.add("oculto");
+                conteudo.classList.add("oculto");
                 return;
             }
 
             if (!estado.analise_final) {
                 vazio.classList.remove("oculto");
                 gerando.classList.add("oculto");
-                grade.classList.add("oculto");
+                conteudo.classList.add("oculto");
                 return;
             }
 
             vazio.classList.add("oculto");
             gerando.classList.add("oculto");
-            grade.classList.remove("oculto");
+            conteudo.classList.remove("oculto");
 
             montarGrade(estado);
-
-            if (!jaRevelado) {
-                jaRevelado = true;
-                narrarResultado(estado);
-            }
         }
 
         const fonte = new EventSource("/stream");
