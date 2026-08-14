@@ -1,7 +1,7 @@
 // ETAPA 3: board ainda usa polling simples. SSE entra na etapa 6.
 
 const INTERVALO_MS = 1500;
-let ultimoPickMostrado = 0;
+let ultimoEstadoTexto = "";
 
 function criarCardPick(pick) {
     const card = document.createElement("div");
@@ -28,25 +28,34 @@ function criarCardPick(pick) {
     return card;
 }
 
+function redesenharBoard(picks) {
+    // reconstroi tudo do zero - evita qualquer estado desencontrado entre o
+    // que ta na tela e o que veio do servidor (ex: depois de um "desfazer")
+    document.querySelectorAll(".coluna-picks").forEach((coluna) => {
+        coluna.innerHTML = "";
+    });
+    for (const pick of picks) {
+        const coluna = document.querySelector(`.coluna[data-slot="${pick.slot}"] .coluna-picks`);
+        if (coluna) {
+            coluna.appendChild(criarCardPick(pick));
+        }
+    }
+}
+
 async function atualizar() {
     try {
         const resposta = await fetch("/estado");
         const estado = await resposta.json();
-        const picks = estado.picks;
 
-        if (picks.length === ultimoPickMostrado) {
+        // so redesenha se algo realmente mudou - senao a animacao de entrada
+        // dos cards ficaria reiniciando a cada 1.5s sem necessidade
+        const estadoTexto = JSON.stringify(estado.picks);
+        if (estadoTexto === ultimoEstadoTexto) {
             return;
         }
+        ultimoEstadoTexto = estadoTexto;
 
-        // picks novos chegaram desde a ultima checagem - so anexa eles
-        const novos = picks.slice(ultimoPickMostrado);
-        for (const pick of novos) {
-            const coluna = document.querySelector(`.coluna[data-slot="${pick.slot}"] .coluna-picks`);
-            if (coluna) {
-                coluna.appendChild(criarCardPick(pick));
-            }
-        }
-        ultimoPickMostrado = picks.length;
+        redesenharBoard(estado.picks);
     } catch (erro) {
         // regra do projeto: falha aqui nao pode aparecer na tela do projetor
         console.error("falha ao buscar /estado:", erro);
