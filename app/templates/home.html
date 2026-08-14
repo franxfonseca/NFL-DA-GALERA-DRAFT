@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Draft Night</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+        width: 100%;
+        height: 100%;
+        background: #0b0e14;
+        color: #f2f2f2;
+        font-family: "Segoe UI", Arial, sans-serif;
+        overflow: hidden;
+    }
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2vh;
+        text-align: center;
+        padding: 0 8vw;
+    }
+
+    img {
+        width: 14vw;
+        height: 14vw;
+        min-width: 140px;
+        min-height: 140px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 4px solid #d8c98a;
+    }
+
+    h1 {
+        font-size: 2.4vw;
+        letter-spacing: 0.1em;
+        color: #d8c98a;
+    }
+
+    .fala {
+        display: flex;
+        align-items: center;
+        gap: 1vw;
+        max-width: 55vw;
+    }
+
+    .fala p {
+        font-size: 1.3vw;
+        line-height: 1.5;
+        color: #ddd;
+        font-style: italic;
+    }
+
+    .btn-ouvir {
+        background: #1b2130;
+        border: 2px solid #2a3142;
+        border-radius: 50%;
+        width: 2.4vw;
+        height: 2.4vw;
+        min-width: 32px;
+        min-height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1.2vw;
+        flex-shrink: 0;
+        color: #d8c98a;
+    }
+    .btn-ouvir:hover { border-color: #d8c98a; }
+    .btn-ouvir.falando { background: #d8c98a; color: #0b0e14; }
+
+    #btn-board {
+        margin-top: 2vh;
+        font-size: 1.4vw;
+        padding: 1vw 2.4vw;
+        background: #2e7d32;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: bold;
+        text-decoration: none;
+    }
+</style>
+</head>
+<body>
+    <img src="{{ url_for('static', filename='img/tom_brady.png') }}" alt="Tom Brady">
+    <h1>DRAFT NIGHT</h1>
+
+    <div class="fala">
+        <button class="btn-ouvir" id="btn-ouvir" title="Ouvir">🔊</button>
+        <p id="texto-boas-vindas"></p>
+    </div>
+
+    <a id="btn-board" href="/board">Entrar no Board</a>
+
+    <script>
+        const MENSAGEM = "E aí, pessoal! Tom Brady aqui. Vou ser o comentarista de vocês " +
+            "nessa noite de draft - e olha, depois de 7 anéis eu entendo um pouco de como " +
+            "montar um time vencedor. Desejo um ótimo draft pra todo mundo, que os melhores " +
+            "picks vençam, e que ninguém erre feio igual eu nunca errei. Vamos nessa!";
+
+        document.getElementById("texto-boas-vindas").textContent = MENSAGEM;
+
+        let vozEscolhida = null;
+        document.getElementById("btn-ouvir").addEventListener("click", (evento) => {
+            try {
+                speechSynthesis.cancel();
+                const botao = evento.currentTarget;
+                const utter = new SpeechSynthesisUtterance(MENSAGEM);
+                utter.lang = "pt-BR";
+                if (!vozEscolhida) {
+                    vozEscolhida = speechSynthesis.getVoices().find((v) => v.lang.startsWith("pt")) || null;
+                }
+                if (vozEscolhida) utter.voice = vozEscolhida;
+                botao.classList.add("falando");
+                utter.onend = () => botao.classList.remove("falando");
+                utter.onerror = () => botao.classList.remove("falando");
+                speechSynthesis.speak(utter);
+            } catch (erro) {
+                console.error("falha no TTS:", erro);
+            }
+        });
+    </script>
+</body>
+</html>

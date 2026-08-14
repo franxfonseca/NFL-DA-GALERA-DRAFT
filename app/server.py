@@ -9,7 +9,9 @@ Ponto de entrada unico: POST /pick. O modo manual (painel do operador em
 rota - o board nao sabe (nem precisa saber) de onde o pick veio.
 
 Rotas:
-    GET  /            - board pra jogar no projetor
+    GET  /            - redireciona pra /home
+    GET  /home         - tela de abertura, Brady dando as boas-vindas
+    GET  /board        - board pra jogar no projetor
     GET  /control      - painel do operador (modo manual)
     GET  /resultado     - tela de analise final (etapa 8), pos-draft
     GET  /comentarios    - reve as falas do Tom Brady de cada rodada ja concluida
@@ -34,7 +36,7 @@ import time
 from pathlib import Path
 
 import requests
-from flask import Flask, Response, abort, jsonify, render_template, request, send_from_directory
+from flask import Flask, Response, abort, jsonify, redirect, render_template, request, send_from_directory, url_for
 
 BASE = Path(__file__).parent.parent
 DATA = BASE / "data"
@@ -398,6 +400,16 @@ def buscar():
 
 
 @app.route("/")
+def raiz():
+    return redirect(url_for("home"))
+
+
+@app.route("/home")
+def home():
+    return render_template("home.html")
+
+
+@app.route("/board")
 def board():
     return render_template("board.html", num_times=NUM_TIMES)
 
