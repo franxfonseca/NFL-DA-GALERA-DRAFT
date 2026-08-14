@@ -11,11 +11,13 @@ rota - o board nao sabe (nem precisa saber) de onde o pick veio.
 Rotas:
     GET  /            - board pra jogar no projetor
     GET  /control      - painel do operador (modo manual)
+    GET  /resultado     - tela de analise final (etapa 8), pos-draft
     GET  /stream        - SSE: manda o estado toda vez que muda (etapa 6)
     GET  /estado        - estado atual do draft, em JSON (fallback/debug manual)
     POST /pick          - registra um pick. Body JSON: {"nome": "..."} ou {"player_id": "..."}
     POST /desfazer       - remove o ultimo pick (engano do operador)
     POST /reset          - zera o draft inteiro
+    POST /finalizar      - gera a analise final (nota por time), roda em background
     GET  /img/players/<id>.png  - foto do jogador, cai na silhueta se nao existir
     GET  /img/logos/<sigla>.png - logo do time
 
@@ -56,7 +58,8 @@ def carregar_env() -> dict:
 
 
 GROQ_API_KEY = carregar_env().get("GROQ_API_KEY", "")
-GROQ_MODELO = "llama-3.1-8b-instant"
+GROQ_MODELO = "llama-3.1-8b-instant"  # rapido - comentario de rodada, ao vivo
+GROQ_MODELO_FINAL = "llama-3.3-70b-versatile"  # maior - analise final, sem pressa
 
 app = Flask(__name__)
 
@@ -96,6 +99,8 @@ if ARQUIVO_ESTADO.exists():
 else:
     estado = {"picks": [], "times": {}}
 estado.setdefault("times", {})  # {"1": {"nome_time": "...", "dono": "..."}, ...}
+estado.setdefault("analise_final", None)
+estado.setdefault("gerando_analise_final", False)
 
 
 def salvar_estado() -> None:
@@ -130,15 +135,39 @@ def eh_fim_de_rodada(numero_pick: int) -> bool:
     return numero_pick % NUM_TIMES == 0
 
 
+def chamar_groq(prompt: str, modelo: str, max_tokens: int, temperatura: float = 0.9, timeout: int = 8) -> str | None:
+    """Chamada generica ao Groq. Retorna None em qualquer falha (rede, rate
+    limit, sem chave) - quem chama decide o que fazer sem comentario nenhum."""
+    if not GROQ_API_KEY:
+        return None
+    try:
+        resposta = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+            json={
+                "model": modelo,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": max_tokens,
+                "temperature": temperatura,
+            },
+            timeout=timeout,
+        )
+        resposta.raise_for_status()
+        # forca UTF-8 explicito - o requests as vezes decodifica errado (Latin-1)
+        # quando o header Content-Type do Groq nao declara o charset
+        corpo = json.loads(resposta.content.decode("utf-8"))
+        return corpo["choices"][0]["message"]["content"].strip()
+    except Exception as erro:
+        print(f"[chamada ao Groq falhou] modelo={modelo}: {erro}")
+        return None
+
+
 def gerar_comentario_rodada(rodada: int) -> str | None:
     """Chama o Groq (gratis, rapido) pra uma analise curta da RODADA inteira,
     no estilo do Tom Brady: saudosista e nostalgico do proprio tempo de jogador,
     sempre comparando tudo com sua carreira e seus 7 aneis de campeao. Roda em
     background - se falhar ou demorar, o show nao espera (degradacao
     silenciosa). Sem chave configurada, nem tenta."""
-    if not GROQ_API_KEY:
-        return None
-
     picks_da_rodada = [p for p in estado["picks"] if p["rodada"] == rodada]
     if not picks_da_rodada:
         return None
@@ -184,26 +213,68 @@ def gerar_comentario_rodada(rodada: int) -> str | None:
         "paragrafo, sem introducao, sem aspas."
     )
 
-    try:
-        resposta = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
-            json={
-                "model": GROQ_MODELO,
-                "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 220,
-                "temperature": 0.9,
-            },
-            timeout=8,
-        )
-        resposta.raise_for_status()
-        # forca UTF-8 explicito - o requests as vezes decodifica errado (Latin-1)
-        # quando o header Content-Type do Groq nao declara o charset
-        corpo = json.loads(resposta.content.decode("utf-8"))
-        return corpo["choices"][0]["message"]["content"].strip()
-    except Exception as erro:
-        print(f"[comentario de rodada falhou] rodada {rodada}: {erro}")
+    return chamar_groq(prompt, GROQ_MODELO, max_tokens=220)
+
+
+def gerar_analise_final() -> dict | None:
+    """ETAPA 8 - uma chamada so, com o modelo maior (GROQ_MODELO_FINAL), sem
+    pressa de latencia (roda so quando o operador clica em "Finalizar draft").
+    Pede nota + comentario por time e um resumo geral da noite, em JSON."""
+    if not estado["picks"]:
         return None
+
+    times_info = estado["times"]
+
+    def nome_do_time(slot: str) -> str:
+        info = times_info.get(slot, {})
+        nome = info.get("nome_time") or f"Time {slot}"
+        dono = info.get("dono")
+        return f"{nome} ({dono})" if dono else nome
+
+    rosters = {}
+    for p in estado["picks"]:
+        slot = str(p["slot"])
+        rosters.setdefault(slot, []).append(p)
+
+    blocos = []
+    for slot in sorted(rosters, key=int):
+        picks_do_time = sorted(rosters[slot], key=lambda p: p["pick"])
+        jogadores = "\n".join(
+            f"  - {p['nome']} ({p['posicao']} - {p['time_nfl']}), rodada {p['rodada']}"
+            for p in picks_do_time
+        )
+        blocos.append(f"TIME {slot} - {nome_do_time(slot)}:\n{jogadores}")
+    elencos = "\n\n".join(blocos)
+
+    prompt = (
+        "Voce e um analista experiente de fantasy football, avaliando o "
+        "resultado final de um draft. Seja direto, especifico e justo - "
+        "elogie boas escolhas e critique elencos desequilibrados ou fracos.\n\n"
+        f"Elencos formados no draft:\n\n{elencos}\n\n"
+        "Voce e o Tom Brady, falando diretamente com cada dono de time sobre o "
+        "elenco que ele montou - saudosista da sua propria carreira e seus 7 "
+        "aneis, comparando os jogadores de hoje com a epoca dele.\n\n"
+        "Responda SOMENTE com um JSON valido, nesse formato exato:\n"
+        '{"resumo_geral": "2-3 frases do Tom Brady sobre o draft como um '
+        'todo, na primeira pessoa, destacando o melhor e o pior elenco", '
+        '"times": {"<numero do time>": {"nota": "<uma letra so, de A a F, '
+        'sem + ou ->", "comentario": "1-2 frases do Tom Brady na primeira '
+        'pessoa, falando direto com o dono desse time sobre o elenco dele"}}}\n\n'
+        "Inclua TODOS os times listados acima no campo \"times\". So o JSON, "
+        "nada antes nem depois, sem markdown, sem crases."
+    )
+
+    resposta = chamar_groq(prompt, GROQ_MODELO_FINAL, max_tokens=2000, temperatura=0.7, timeout=30)
+    if resposta is None:
+        return None
+
+    try:
+        # o modelo as vezes envolve o JSON em ```json ... ``` mesmo pedindo pra nao
+        limpo = resposta.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+        return json.loads(limpo)
+    except Exception as erro:
+        print(f"[analise final] resposta nao veio em JSON valido: {erro}")
+        return {"resumo_geral": resposta, "times": {}}
 
 
 def comentar_rodada_em_segundo_plano(numero_pick: int, rodada: int) -> None:
@@ -219,6 +290,22 @@ def comentar_rodada_em_segundo_plano(numero_pick: int, rodada: int) -> None:
         if pick_atual is not None:
             pick_atual["comentario_rodada"] = comentario
             salvar_estado()
+
+    threading.Thread(target=tarefa, daemon=True).start()
+
+
+def finalizar_draft_em_segundo_plano() -> None:
+    """A analise final demora mais (modelo maior, elenco inteiro) - roda em
+    background e o operador acompanha pelo /resultado, que atualiza sozinho
+    via SSE assim que terminar."""
+    estado["gerando_analise_final"] = True
+    salvar_estado()
+
+    def tarefa():
+        analise = gerar_analise_final()
+        estado["analise_final"] = analise
+        estado["gerando_analise_final"] = False
+        salvar_estado()
 
     threading.Thread(target=tarefa, daemon=True).start()
 
@@ -317,6 +404,11 @@ def board():
 @app.route("/control")
 def control():
     return render_template("control.html", num_times=NUM_TIMES)
+
+
+@app.route("/resultado")
+def resultado():
+    return render_template("resultado.html")
 
 
 @app.route("/estado")
@@ -430,7 +522,19 @@ def desfazer():
 @app.route("/reset", methods=["POST"])
 def resetar():
     estado["picks"] = []
+    estado["analise_final"] = None
+    estado["gerando_analise_final"] = False
     salvar_estado()
+    return jsonify({"ok": True})
+
+
+@app.route("/finalizar", methods=["POST"])
+def finalizar():
+    if not estado["picks"]:
+        return jsonify({"ok": False, "erro": "nenhum pick registrado ainda"}), 400
+    if estado["gerando_analise_final"]:
+        return jsonify({"ok": False, "erro": "analise ja esta sendo gerada"}), 400
+    finalizar_draft_em_segundo_plano()
     return jsonify({"ok": True})
 
 
