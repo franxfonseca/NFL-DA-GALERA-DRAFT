@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Draft Night - Controle</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #12161f;
+        color: #f2f2f2;
+        max-width: 480px;
+        margin: 40px auto;
+        padding: 0 16px;
+    }
+    h1 { font-size: 1.4rem; margin-bottom: 4px; }
+    p.sub { color: #a0a8bd; margin-bottom: 24px; font-size: 0.9rem; }
+    input[type=text] {
+        width: 100%;
+        padding: 14px;
+        font-size: 1.2rem;
+        border-radius: 6px;
+        border: 2px solid #2a3142;
+        background: #1b2130;
+        color: #fff;
+    }
+    button {
+        margin-top: 12px;
+        padding: 14px;
+        font-size: 1.1rem;
+        width: 100%;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    #enviar { background: #2e7d32; color: #fff; }
+    #desfazer { background: #444; color: #fff; margin-top: 24px; }
+    #reset { background: #7d2e2e; color: #fff; }
+    #mensagem {
+        margin-top: 16px;
+        padding: 12px;
+        border-radius: 6px;
+        min-height: 20px;
+        font-size: 0.95rem;
+    }
+    #mensagem.ok { background: #1b3a1e; }
+    #mensagem.erro { background: #3a1b1b; }
+</style>
+</head>
+<body>
+    <h1>Controle do Draft</h1>
+    <p class="sub">Digite o nome do jogador e envie. Funciona igual a captura automatica.</p>
+
+    <form id="form-pick">
+        <input type="text" id="nome" placeholder="Nome do jogador" autofocus autocomplete="off">
+        <button type="submit" id="enviar">Registrar pick</button>
+    </form>
+
+    <div id="mensagem"></div>
+
+    <button id="desfazer">Desfazer ultimo pick</button>
+    <button id="reset">Zerar draft inteiro</button>
+
+    <script>
+        const form = document.getElementById("form-pick");
+        const campoNome = document.getElementById("nome");
+        const mensagem = document.getElementById("mensagem");
+
+        function mostrarMensagem(texto, ok) {
+            mensagem.textContent = texto;
+            mensagem.className = ok ? "ok" : "erro";
+        }
+
+        form.addEventListener("submit", async (evento) => {
+            evento.preventDefault();
+            const nome = campoNome.value.trim();
+            if (!nome) return;
+
+            try {
+                const resposta = await fetch("/pick", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nome }),
+                });
+                const dados = await resposta.json();
+                if (dados.ok) {
+                    mostrarMensagem(`Pick ${dados.pick.pick}: ${dados.pick.nome} (${dados.pick.posicao} - ${dados.pick.time_nfl})`, true);
+                    campoNome.value = "";
+                } else {
+                    mostrarMensagem(dados.erro, false);
+                }
+            } catch (erro) {
+                mostrarMensagem("Falha ao falar com o servidor.", false);
+            }
+            campoNome.focus();
+        });
+
+        document.getElementById("desfazer").addEventListener("click", async () => {
+            const resposta = await fetch("/desfazer", { method: "POST" });
+            const dados = await resposta.json();
+            if (dados.ok) {
+                mostrarMensagem(`Desfeito: ${dados.removido.nome}`, true);
+            } else {
+                mostrarMensagem(dados.erro, false);
+            }
+        });
+
+        document.getElementById("reset").addEventListener("click", async () => {
+            if (!confirm("Zerar o draft inteiro?")) return;
+            await fetch("/reset", { method: "POST" });
+            mostrarMensagem("Draft zerado.", true);
+        });
+    </script>
+</body>
+</html>
