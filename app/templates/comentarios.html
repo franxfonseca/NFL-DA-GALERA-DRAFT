@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Draft Night - Comentários das Rodadas</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+        width: 100%;
+        min-height: 100%;
+        background: #0b0e14;
+        color: #f2f2f2;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+    body { padding: 3vh 3vw; }
+
+    h1 {
+        font-size: 2.2vw;
+        text-align: center;
+        letter-spacing: 0.1em;
+        color: #d8c98a;
+        margin-bottom: 2vh;
+    }
+
+    #estado-vazio {
+        text-align: center;
+        margin-top: 15vh;
+        font-size: 1.4vw;
+        color: #a0a8bd;
+    }
+
+    #lista {
+        display: flex;
+        flex-direction: column;
+        gap: 1vw;
+        max-width: 60vw;
+        margin: 0 auto;
+    }
+
+    .card-rodada {
+        background: #12161f;
+        border: 2px solid #2a3142;
+        border-radius: 10px;
+        padding: 1vw 1.4vw;
+        display: flex;
+        align-items: flex-start;
+        gap: 1vw;
+    }
+
+    .card-rodada img {
+        width: 3.2vw;
+        height: 3.2vw;
+        min-width: 44px;
+        min-height: 44px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid #d8c98a;
+        flex-shrink: 0;
+    }
+
+    .card-rodada .conteudo { flex: 1; }
+
+    .card-rodada .titulo {
+        display: flex;
+        align-items: center;
+        gap: 0.6vw;
+        margin-bottom: 0.3vw;
+    }
+
+    .card-rodada .titulo span.rotulo {
+        font-size: 0.9vw;
+        color: #a0a8bd;
+        letter-spacing: 0.05em;
+    }
+
+    .card-rodada .texto {
+        font-size: 1vw;
+        line-height: 1.45;
+        color: #ddd;
+    }
+
+    .btn-ouvir {
+        background: #1b2130;
+        border: 2px solid #2a3142;
+        border-radius: 50%;
+        width: 2vw;
+        height: 2vw;
+        min-width: 28px;
+        min-height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1vw;
+        flex-shrink: 0;
+        color: #d8c98a;
+    }
+    .btn-ouvir:hover { border-color: #d8c98a; }
+    .btn-ouvir.falando { background: #d8c98a; color: #0b0e14; }
+
+    .oculto { display: none; }
+</style>
+</head>
+<body>
+    <h1>COMENTÁRIOS DO TOM BRADY, POR RODADA</h1>
+
+    <div id="estado-vazio" class="oculto">Nenhuma rodada terminada ainda - o comentário sai assim que o último pick da rodada 1 acontecer.</div>
+    <div id="lista"></div>
+
+    <script>
+        let vozEscolhida = null;
+        let botaoFalando = null;
+
+        function pegarVoz() {
+            if (vozEscolhida) return vozEscolhida;
+            vozEscolhida = speechSynthesis.getVoices().find((v) => v.lang.startsWith("pt")) || null;
+            return vozEscolhida;
+        }
+
+        function falar(texto, botao) {
+            try {
+                speechSynthesis.cancel();
+                if (botaoFalando) botaoFalando.classList.remove("falando");
+
+                const utter = new SpeechSynthesisUtterance(texto);
+                utter.lang = "pt-BR";
+                const voz = pegarVoz();
+                if (voz) utter.voice = voz;
+
+                botao.classList.add("falando");
+                botaoFalando = botao;
+                utter.onend = () => botao.classList.remove("falando");
+                utter.onerror = () => botao.classList.remove("falando");
+
+                speechSynthesis.speak(utter);
+            } catch (erro) {
+                console.error("falha no TTS:", erro);
+            }
+        }
+
+        function renderizar(estado) {
+            // uma rodada aparece assim que o ultimo pick dela tiver comentario
+            const comentarios = estado.picks
+                .filter((p) => p.fim_de_rodada && p.comentario_rodada)
+                .sort((a, b) => a.rodada - b.rodada);
+
+            const vazio = document.getElementById("estado-vazio");
+            const lista = document.getElementById("lista");
+
+            if (!comentarios.length) {
+                vazio.classList.remove("oculto");
+                lista.innerHTML = "";
+                return;
+            }
+            vazio.classList.add("oculto");
+
+            lista.innerHTML = "";
+            for (const pick of comentarios) {
+                const card = document.createElement("div");
+                card.className = "card-rodada";
+
+                const img = document.createElement("img");
+                img.src = "{{ url_for('static', filename='img/tom_brady.png') }}";
+                img.alt = "Tom Brady";
+
+                const conteudo = document.createElement("div");
+                conteudo.className = "conteudo";
+
+                const titulo = document.createElement("div");
+                titulo.className = "titulo";
+
+                const botao = document.createElement("button");
+                botao.className = "btn-ouvir";
+                botao.title = `Ouvir análise da rodada ${pick.rodada}`;
+                botao.textContent = "🔊";
+                botao.onclick = (evento) => falar(pick.comentario_rodada, evento.currentTarget);
+
+                const rotulo = document.createElement("span");
+                rotulo.className = "rotulo";
+                rotulo.textContent = `RODADA ${pick.rodada}`;
+
+                titulo.append(botao, rotulo);
+
+                const texto = document.createElement("div");
+                texto.className = "texto";
+                texto.textContent = pick.comentario_rodada;
+
+                conteudo.append(titulo, texto);
+                card.append(img, conteudo);
+                lista.appendChild(card);
+            }
+        }
+
+        const fonte = new EventSource("/stream");
+        fonte.onmessage = (evento) => {
+            try {
+                renderizar(JSON.parse(evento.data));
+            } catch (erro) {
+                console.error("falha ao processar estado:", erro);
+            }
+        };
+    </script>
+</body>
+</html>

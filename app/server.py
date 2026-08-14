@@ -12,6 +12,7 @@ Rotas:
     GET  /            - board pra jogar no projetor
     GET  /control      - painel do operador (modo manual)
     GET  /resultado     - tela de analise final (etapa 8), pos-draft
+    GET  /comentarios    - reve as falas do Tom Brady de cada rodada ja concluida
     GET  /stream        - SSE: manda o estado toda vez que muda (etapa 6)
     GET  /estado        - estado atual do draft, em JSON (fallback/debug manual)
     POST /pick          - registra um pick. Body JSON: {"nome": "..."} ou {"player_id": "..."}
@@ -409,6 +410,11 @@ def control():
 @app.route("/resultado")
 def resultado():
     return render_template("resultado.html")
+
+
+@app.route("/comentarios")
+def comentarios():
+    return render_template("comentarios.html")
 
 
 @app.route("/estado")
