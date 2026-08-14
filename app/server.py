@@ -94,6 +94,12 @@ def buscar_jogador_por_id(player_id: str) -> dict | None:
     return {"id": str(player_id), **info}
 
 
+def jogadores_draftados() -> set[str]:
+    """IDs de quem ja foi escolhido nesse draft - pra tirar da lista, ninguem
+    pode ser draftado duas vezes."""
+    return {p["player_id"] for p in estado["picks"]}
+
+
 def buscar_jogador_por_nome(nome_digitado: str) -> tuple[dict | None, str | None]:
     chave = normalizar(nome_digitado)
     ids = INDICE_NOMES.get(chave)
@@ -110,25 +116,35 @@ def buscar_jogador_por_nome(nome_digitado: str) -> tuple[dict | None, str | None
     if not ids:
         return None, f'nenhum jogador encontrado pra "{nome_digitado}"'
 
-    if len(ids) > 1:
+    draftados = jogadores_draftados()
+    disponiveis = [jid for jid in ids if jid not in draftados]
+
+    if not disponiveis:
         nomes = sorted({JOGADORES[i]["nome"] for i in ids})
+        return None, f"ja foi draftado: {', '.join(nomes[:3])}"
+
+    if len(disponiveis) > 1:
+        nomes = sorted({JOGADORES[i]["nome"] for i in disponiveis})
         return None, f"nome ambiguo, digite mais completo: {', '.join(nomes[:6])}"
 
-    return buscar_jogador_por_id(ids[0]), None
+    return buscar_jogador_por_id(disponiveis[0]), None
 
 
 def buscar_candidatos(texto_digitado: str, limite: int = 8) -> list[dict]:
     """Pra alimentar o autocomplete do painel: todos os jogadores cujo nome
-    contem o texto digitado, ordenados por ADP (melhor jogador primeiro)."""
+    contem o texto digitado, ordenados por ADP (melhor jogador primeiro).
+    Quem ja foi draftado nao aparece mais na lista."""
     chave = normalizar(texto_digitado)
     if not chave:
         return []
 
+    draftados = jogadores_draftados()
     ids = {
         jid
         for chave_catalogo, lista_ids in INDICE_NOMES.items()
         if chave in chave_catalogo
         for jid in lista_ids
+        if jid not in draftados
     }
 
     candidatos = [buscar_jogador_por_id(jid) for jid in ids]
@@ -170,6 +186,8 @@ def registrar_pick():
         jogador = buscar_jogador_por_id(player_id)
         if not jogador:
             erro = f"id de jogador desconhecido: {player_id}"
+        elif jogador["id"] in jogadores_draftados():
+            erro = f"{jogador['nome']} ja foi draftado"
     elif nome:
         jogador, erro = buscar_jogador_por_nome(nome)
     else:
