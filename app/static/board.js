@@ -5,6 +5,18 @@ const INTERVALO_MS = 1500;
 let ultimoEstadoTexto = "";
 let picksConhecidos = null; // null = board ainda nao carregou pela 1a vez
 
+// o navegador so deixa Web Audio tocar de verdade depois de um clique do
+// usuario na pagina - o board e uma tela passiva, entao pede isso uma vez
+// so no comeco da noite (ver #desbloquear no board.html)
+let audioCtx = null;
+
+document.getElementById("btn-desbloquear").addEventListener("click", () => {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    audioCtx.resume();
+    window.audioCtx = audioCtx; // pra dar F12 e conferir audioCtx.state se o som falhar na hora
+    document.getElementById("desbloquear").classList.add("escondido");
+});
+
 // picks que chegaram e ainda vao passar pela coreografia de revelacao
 const filaRevelacao = [];
 let revelando = false;
@@ -82,18 +94,20 @@ function falar(texto) {
 
 function tocarSom(veredito) {
     // beep gerado na hora (Web Audio) - sem depender de arquivo de audio.
+    // reaproveita o audioCtx desbloqueado no clique inicial; sem ele, nao
+    // tem som (mas o resto da revelacao segue normal - nunca trava o show)
+    if (!audioCtx) return;
     try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const ganho = ctx.createGain();
+        const osc = audioCtx.createOscillator();
+        const ganho = audioCtx.createGain();
         osc.connect(ganho);
-        ganho.connect(ctx.destination);
+        ganho.connect(audioCtx.destination);
         osc.frequency.value = veredito === "roubo" ? 880 : 200;
         osc.type = veredito === "roubo" ? "triangle" : "sawtooth";
-        ganho.gain.setValueAtTime(0.15, ctx.currentTime);
-        ganho.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+        ganho.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        ganho.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
         osc.start();
-        osc.stop(ctx.currentTime + 0.6);
+        osc.stop(audioCtx.currentTime + 0.6);
     } catch (erro) {
         console.error("falha ao tocar som:", erro);
     }

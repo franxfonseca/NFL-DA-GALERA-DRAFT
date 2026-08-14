@@ -100,6 +100,35 @@ html, body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* ---- desbloqueio de audio (navegador exige um clique antes de deixar
+   som tocar sozinho - o board e uma tela passiva, entao pede uma vez so
+   no comeco da noite) ---- */
+
+#desbloquear {
+    position: fixed;
+    inset: 0;
+    background: #0b0e14;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+#desbloquear.escondido {
+    display: none;
+}
+
+#btn-desbloquear {
+    font-size: 2vw;
+    padding: 1.2vw 2.4vw;
+    background: #2e7d32;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
 /* ---- coreografia de revelacao (etapa 4) ---- */
 
 #revelacao {
