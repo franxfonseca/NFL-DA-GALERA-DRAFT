@@ -126,30 +126,41 @@ def calcular_rodada_e_slot(numero_pick: int) -> tuple[int, int]:
     return rodada, slot
 
 
-def merece_comentario(numero_pick: int) -> bool:
-    """So comenta a rodada 1 inteira (as picks mais expostas) e o ultimo pick
-    de cada rodada (fecha o assunto) - nao vale a pena gerar 192 comentarios."""
-    return numero_pick <= NUM_TIMES or numero_pick % NUM_TIMES == 0
+def eh_fim_de_rodada(numero_pick: int) -> bool:
+    return numero_pick % NUM_TIMES == 0
 
 
-def gerar_comentario_ia(pick: dict) -> str | None:
-    """Chama o Groq (gratis, rapido) pra um comentario curto sobre o pick.
-    Roda em background - se falhar ou demorar, o show nao espera (degradacao
-    silenciosa). Sem chave configurada, nem tenta."""
+def gerar_comentario_rodada(rodada: int) -> str | None:
+    """Chama o Groq (gratis, rapido) pra uma analise curta da RODADA inteira,
+    no estilo de um analista rabugento que acha que o futebol acabou quando o
+    Peyton Manning se aposentou. Roda em background - se falhar ou demorar, o
+    show nao espera (degradacao silenciosa). Sem chave configurada, nem tenta."""
     if not GROQ_API_KEY:
         return None
 
-    veredito_txt = {
-        "roubo": "foi um ROUBO, o jogador caiu muito - ADP bem mais tarde que o pick",
-        "reach": "foi um REACH, veio bem antes do ADP esperado",
-    }.get(pick["veredito"], "veio dentro do esperado pelo ADP")
+    picks_da_rodada = [p for p in estado["picks"] if p["rodada"] == rodada]
+    if not picks_da_rodada:
+        return None
+
+    def linha(p):
+        veredito_txt = {"roubo": "ROUBO", "reach": "REACH"}.get(p["veredito"], "dentro do esperado")
+        return f"- Pick {p['pick']}: {p['nome']} ({p['posicao']} - {p['time_nfl']}) - {veredito_txt}"
+
+    lista_picks = "\n".join(linha(p) for p in picks_da_rodada)
 
     prompt = (
-        f"Voce e um comentarista debochado de um draft de fantasy football (NFL). "
-        f"Comente em UMA frase curta e engracada, em portugues do Brasil, esse pick:\n"
-        f"Rodada {pick['rodada']}, pick {pick['pick']}: {pick['nome']} "
-        f"({pick['posicao']} - {pick['time_nfl']}). {veredito_txt}.\n"
-        f"So a frase do comentario, sem aspas, sem introducao."
+        "Voce e um analista de fantasy football debochado e rabugento, do tipo "
+        "que acha que o futebol americano morreu no dia que o Peyton Manning se "
+        "aposentou e detesta o 'futebol moderno'. Voce vive comparando tudo com "
+        "os tempos antigos, com desdem.\n\n"
+        f"Analise a RODADA {rodada} de um draft de fantasy football como um "
+        "especialista faria de verdade, comparando os picks com o esperado "
+        "(REACH = escolhido cedo demais pro ADP, ROUBO = jogador caiu e saiu "
+        "tarde demais). Cite jogadores especificos pelo nome.\n\n"
+        f"Picks da rodada:\n{lista_picks}\n\n"
+        "Escreva um paragrafo curto (no maximo 4 linhas), em portugues do "
+        "Brasil, no seu estilo debochado e nostalgico. So o paragrafo, sem "
+        "introducao, sem aspas."
     )
 
     try:
@@ -159,7 +170,7 @@ def gerar_comentario_ia(pick: dict) -> str | None:
             json={
                 "model": GROQ_MODELO,
                 "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 60,
+                "max_tokens": 220,
                 "temperature": 0.9,
             },
             timeout=8,
@@ -170,25 +181,22 @@ def gerar_comentario_ia(pick: dict) -> str | None:
         corpo = json.loads(resposta.content.decode("utf-8"))
         return corpo["choices"][0]["message"]["content"].strip()
     except Exception as erro:
-        print(f"[comentario IA falhou] pick {pick['pick']}: {erro}")
+        print(f"[comentario de rodada falhou] rodada {rodada}: {erro}")
         return None
 
 
-def comentar_em_segundo_plano(numero_pick: int) -> None:
+def comentar_rodada_em_segundo_plano(numero_pick: int, rodada: int) -> None:
     """Roda numa thread separada pra nao atrasar a resposta do POST /pick -
     a regra do projeto e 'rapido pra receber, lento pra revelar'."""
 
     def tarefa():
-        pick = next((p for p in estado["picks"] if p["pick"] == numero_pick), None)
-        if pick is None:
-            return  # foi desfeito antes da IA responder
-        comentario = gerar_comentario_ia(pick)
+        comentario = gerar_comentario_rodada(rodada)
         if comentario is None:
             return
         # confere de novo - o pick pode ter sido desfeito enquanto a IA pensava
         pick_atual = next((p for p in estado["picks"] if p["pick"] == numero_pick), None)
         if pick_atual is not None:
-            pick_atual["comentario_ia"] = comentario
+            pick_atual["comentario_rodada"] = comentario
             salvar_estado()
 
     threading.Thread(target=tarefa, daemon=True).start()
@@ -363,6 +371,7 @@ def registrar_pick():
     rodada, slot = calcular_rodada_e_slot(numero_pick)
     time_info = TIMES_NFL.get(jogador["time"], {})
     adp, veredito = calcular_veredito(numero_pick, jogador["id"])
+    fim_de_rodada = eh_fim_de_rodada(numero_pick)
 
     pick = {
         "pick": numero_pick,
@@ -375,14 +384,15 @@ def registrar_pick():
         "cor_time": time_info.get("cor", "#333333"),
         "adp": adp,
         "veredito": veredito,
-        "comentario_ia": None,
+        "fim_de_rodada": fim_de_rodada,
+        "comentario_rodada": None,
         "ts": time.time(),
     }
     estado["picks"].append(pick)
     salvar_estado()
 
-    if merece_comentario(numero_pick):
-        comentar_em_segundo_plano(numero_pick)
+    if fim_de_rodada:
+        comentar_rodada_em_segundo_plano(numero_pick, rodada)
 
     return jsonify({"ok": True, "pick": pick})
 

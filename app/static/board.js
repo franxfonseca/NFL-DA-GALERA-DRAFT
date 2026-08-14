@@ -59,10 +59,9 @@ document.getElementById("btn-desbloquear").addEventListener("click", () => {
 const filaRevelacao = [];
 let revelando = false;
 
-// ETAPA 7: comentario da IA chega depois (a chamada roda em segundo plano no
-// servidor) - pode ser antes ou depois do card ja estar na coluna. Guardamos
-// aqui pra nao depender de qual chegou primeiro.
-const comentariosConhecidos = {}; // numero do pick -> texto
+// ETAPA 7: analise da IA sobre a RODADA inteira (nao por pick) - chega depois,
+// rodando em segundo plano no servidor, so no ultimo pick de cada rodada.
+const comentariosRodada = {}; // numero da rodada -> texto
 
 function criarCardPick(pick) {
     const card = document.createElement("div");
@@ -87,40 +86,25 @@ function criarCardPick(pick) {
     rodada.textContent = `Rodada ${pick.rodada} - Pick ${pick.pick}`;
 
     card.append(img, nome, info, rodada);
-
-    const comentario = pick.comentario_ia || comentariosConhecidos[pick.pick];
-    if (comentario) {
-        card.appendChild(criarComentario(comentario));
-    }
-
     return card;
 }
 
-function criarComentario(texto) {
-    const div = document.createElement("div");
-    div.className = "comentario";
-    div.textContent = texto;
-    return div;
-}
-
-function registrarComentarios(picks) {
+function registrarComentariosRodada(picks) {
     for (const pick of picks) {
-        if (pick.comentario_ia) {
-            comentariosConhecidos[pick.pick] = pick.comentario_ia;
+        if (pick.fim_de_rodada && pick.comentario_rodada) {
+            comentariosRodada[pick.rodada] = pick.comentario_rodada;
         }
     }
 }
 
-function aplicarComentariosPendentes() {
-    // pega cards que ja estao na tela mas ainda nao tinham comentario quando
-    // foram criados - acontece quando a IA demora mais que a coreografia
-    document.querySelectorAll(".pick-card").forEach((card) => {
-        if (card.querySelector(".comentario")) return;
-        const texto = comentariosConhecidos[card.dataset.pick];
-        if (texto) {
-            card.appendChild(criarComentario(texto));
-        }
-    });
+async function esperarResumoRodada(rodada) {
+    // a IA costuma responder em ~1s, mas da mais algumas chances antes de
+    // desistir - se nao chegar a tempo, essa rodada so fica sem resumo
+    for (let tentativa = 0; tentativa < 6; tentativa++) {
+        if (comentariosRodada[rodada]) return comentariosRodada[rodada];
+        await esperar(500);
+    }
+    return comentariosRodada[rodada] || null;
 }
 
 function atualizarCabecalhos(times) {
@@ -200,7 +184,9 @@ async function revelarPick(pick) {
     const nomeEl = document.getElementById("rev-nome");
     const infoEl = document.getElementById("rev-info");
     const veredictoEl = document.getElementById("rev-veredito");
-    const comentarioEl = document.getElementById("rev-comentario");
+    const resumoEl = document.getElementById("rev-resumo-rodada");
+    const resumoNumeroEl = document.getElementById("resumo-rodada-numero");
+    const resumoTextoEl = document.getElementById("resumo-rodada-texto");
 
     // reseta o visual de uma revelacao anterior antes de comecar essa
     foto.classList.remove("revelada");
@@ -209,8 +195,8 @@ async function revelarPick(pick) {
     veredictoEl.classList.remove("mostrar");
     veredictoEl.className = "revelacao-veredito";
     veredictoEl.textContent = "";
-    comentarioEl.classList.remove("mostrar");
-    comentarioEl.textContent = "";
+    resumoEl.classList.remove("mostrar");
+    resumoTextoEl.textContent = "";
 
     numeroPick.textContent = pick.pick;
     foto.src = `/img/players/${pick.player_id}.png`;
@@ -242,16 +228,21 @@ async function revelarPick(pick) {
     }
     veredictoEl.classList.add("mostrar");
 
-    // ~2s: comentario da IA, se ja tiver chegado a essa altura (rodou em
-    // segundo plano desde que o pick foi registrado). Se nao chegou ainda,
-    // essa pausa fica so no silencio - o comentario ainda pode aparecer
-    // depois, direto no card, quando a resposta da IA voltar.
-    const comentario = pick.comentario_ia || comentariosConhecidos[pick.pick];
-    if (comentario) {
-        comentarioEl.textContent = comentario;
-        comentarioEl.classList.add("mostrar");
-    }
     await esperar(2000);
+
+    // se for o ultimo pick da rodada, espera a analise da IA sobre a rodada
+    // inteira e mostra por cima do resto - senao, segue direto pro fechamento
+    if (pick.fim_de_rodada) {
+        const resumo = pick.comentario_rodada || (await esperarResumoRodada(pick.rodada));
+        if (resumo) {
+            resumoNumeroEl.textContent = pick.rodada;
+            resumoTextoEl.textContent = resumo;
+            resumoEl.classList.add("mostrar");
+            await esperar(6000); // paragrafo e mais longo, precisa de mais tempo de leitura
+            resumoEl.classList.remove("mostrar");
+            await esperar(400);
+        }
+    }
 
     overlay.classList.remove("ativa");
     await esperar(300); // da tempo do fade out antes do proximo pick comecar
@@ -270,8 +261,7 @@ async function processarFila() {
 
 function processarEstado(estado) {
     atualizarCabecalhos(estado.times || {});
-    registrarComentarios(estado.picks);
-    aplicarComentariosPendentes();
+    registrarComentariosRodada(estado.picks);
 
     if (picksConhecidos === null) {
         // 1a carga da pagina - mostra o que ja existe direto, sem coreografia
