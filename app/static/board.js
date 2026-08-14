@@ -10,10 +10,48 @@ let picksConhecidos = null; // null = board ainda nao carregou pela 1a vez
 // so no comeco da noite (ver #desbloquear no board.html)
 let audioCtx = null;
 
+// voz escolhida pro TTS - fica salva no navegador desse board especifico
+// (nao no servidor, porque cada dispositivo tem seu proprio conjunto de vozes)
+let vozEscolhida = null;
+
+function popularVozes() {
+    const select = document.getElementById("select-voz");
+    const vozes = speechSynthesis.getVoices();
+    if (!vozes.length) return;
+
+    select.innerHTML = "";
+    // vozes em portugues primeiro, e o resto depois
+    const ordenadas = [...vozes].sort((a, b) => {
+        const aPt = a.lang.startsWith("pt") ? 0 : 1;
+        const bPt = b.lang.startsWith("pt") ? 0 : 1;
+        return aPt - bPt;
+    });
+    for (const voz of ordenadas) {
+        const opcao = document.createElement("option");
+        opcao.value = voz.name;
+        opcao.textContent = `${voz.name} (${voz.lang})`;
+        select.appendChild(opcao);
+    }
+
+    const salva = localStorage.getItem("vozEscolhida");
+    if (salva && ordenadas.some((v) => v.name === salva)) {
+        select.value = salva;
+    }
+}
+
+// getVoices() pode vir vazio na primeira chamada e carregar so depois
+popularVozes();
+speechSynthesis.onvoiceschanged = popularVozes;
+
 document.getElementById("btn-desbloquear").addEventListener("click", () => {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     audioCtx.resume();
     window.audioCtx = audioCtx; // pra dar F12 e conferir audioCtx.state se o som falhar na hora
+
+    const nomeEscolhido = document.getElementById("select-voz").value;
+    vozEscolhida = speechSynthesis.getVoices().find((v) => v.name === nomeEscolhido) || null;
+    localStorage.setItem("vozEscolhida", nomeEscolhido);
+
     document.getElementById("desbloquear").classList.add("escondido");
 });
 
@@ -86,6 +124,9 @@ function falar(texto) {
     try {
         const utter = new SpeechSynthesisUtterance(texto);
         utter.lang = "pt-BR";
+        if (vozEscolhida) {
+            utter.voice = vozEscolhida;
+        }
         speechSynthesis.speak(utter);
     } catch (erro) {
         console.error("falha no TTS:", erro);
