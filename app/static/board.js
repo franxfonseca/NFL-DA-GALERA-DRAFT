@@ -59,9 +59,14 @@ document.getElementById("btn-desbloquear").addEventListener("click", () => {
 const filaRevelacao = [];
 let revelando = false;
 
+// ETAPA 7: analise da IA sobre a RODADA inteira (nao por pick) - chega depois,
+// rodando em segundo plano no servidor, so no ultimo pick de cada rodada.
+const comentariosRodada = {}; // numero da rodada -> texto
+
 function criarCardPick(pick) {
     const card = document.createElement("div");
     card.className = "pick-card";
+    card.dataset.pick = pick.pick;
     card.style.setProperty("--cor-time", pick.cor_time);
 
     const img = document.createElement("img");
@@ -82,6 +87,25 @@ function criarCardPick(pick) {
 
     card.append(img, nome, info, rodada);
     return card;
+}
+
+function registrarComentariosRodada(picks) {
+    for (const pick of picks) {
+        if (pick.fim_de_rodada && pick.comentario_rodada && !comentariosRodada[pick.rodada]) {
+            comentariosRodada[pick.rodada] = pick.comentario_rodada;
+            // atualiza o rodape fixo assim que a IA responde, sem depender
+            // do operador ter visto (ou nao) a tela cheia de revelacao
+            atualizarComentarista(pick.rodada, pick.comentario_rodada);
+        }
+    }
+}
+
+function atualizarComentarista(rodada, texto) {
+    document.getElementById("comentarista-rodada").textContent = rodada;
+    document.getElementById("comentarista-texto").textContent = texto;
+    // so aparece quando o 1o comentario chega (fim da rodada 1) - antes disso
+    // fica escondido, nao faz sentido mostrar o rodape vazio desde o pick 1
+    document.getElementById("comentarista").classList.add("mostrar");
 }
 
 function atualizarCabecalhos(times) {
@@ -161,7 +185,6 @@ async function revelarPick(pick) {
     const nomeEl = document.getElementById("rev-nome");
     const infoEl = document.getElementById("rev-info");
     const veredictoEl = document.getElementById("rev-veredito");
-
     // reseta o visual de uma revelacao anterior antes de comecar essa
     foto.classList.remove("revelada");
     nomeEl.classList.remove("mostrar");
@@ -200,8 +223,11 @@ async function revelarPick(pick) {
     }
     veredictoEl.classList.add("mostrar");
 
-    // ~2s: espaco reservado pro comentario da IA (entra na etapa 7)
     await esperar(2000);
+
+    // o resumo da rodada nao aparece em tela cheia - so no rodape fixo
+    // (#comentarista), atualizado em segundo plano por registrarComentariosRodada.
+    // Isso nao trava nem estende a coreografia desse pick.
 
     overlay.classList.remove("ativa");
     await esperar(300); // da tempo do fade out antes do proximo pick comecar
@@ -220,6 +246,7 @@ async function processarFila() {
 
 function processarEstado(estado) {
     atualizarCabecalhos(estado.times || {});
+    registrarComentariosRodada(estado.picks);
 
     if (picksConhecidos === null) {
         // 1a carga da pagina - mostra o que ja existe direto, sem coreografia

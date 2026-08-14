@@ -36,6 +36,14 @@
         </div>
     </div>
 
+    <div id="comentarista">
+        <img src="{{ url_for('static', filename='img/tom_brady.png') }}" alt="Comentarista">
+        <div class="balao">
+            <div class="balao-titulo">Análise da rodada <span id="comentarista-rodada"></span></div>
+            <div id="comentarista-texto" class="balao-texto"></div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='board.js') }}"></script>
 </body>
 </html>

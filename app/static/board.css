@@ -13,11 +13,17 @@ html, body {
     overflow: hidden;
 }
 
+body {
+    display: flex;
+    flex-direction: column;
+}
+
 #board {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
     width: 100vw;
-    height: 100vh;
+    flex: 1;
+    min-height: 0;
     gap: 2px;
     background: #000;
 }
@@ -238,3 +244,76 @@ html, body {
 
 .revelacao-veredito.roubo { color: #ffb703; }
 .revelacao-veredito.reach { color: #e63946; }
+
+/* rodape do comentarista - so aparece quando o 1o resumo de rodada chega
+   (nao desde o pick 1) e fica fixo dali em diante, nunca "some" como a
+   revelacao em tela cheia */
+#comentarista {
+    display: none;
+    align-items: center;
+    gap: 1vw;
+    height: 30vh;
+    padding: 0.8vw 1.5vw;
+    background: #12161f;
+    border-top: 2px solid #2a3142;
+}
+
+#comentarista.mostrar {
+    display: flex;
+}
+
+#comentarista img {
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #d8c98a;
+    flex-shrink: 0;
+}
+
+.balao {
+    position: relative;
+    background: #1b2130;
+    border: 2px solid #2a3142;
+    border-radius: 12px;
+    padding: 0.6vw 1.2vw;
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.balao::before {
+    content: "";
+    position: absolute;
+    left: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 10px solid transparent;
+    border-right-color: #2a3142;
+}
+
+.balao::after {
+    content: "";
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 8px solid transparent;
+    border-right-color: #1b2130;
+}
+
+.balao-titulo {
+    font-size: 0.8vw;
+    color: #a0a8bd;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.2vw;
+}
+
+.balao-texto {
+    font-size: 1.3vw;
+    line-height: 1.4;
+    overflow-y: auto;
+    max-height: 100%;
+}

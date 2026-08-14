@@ -26,9 +26,11 @@ Uso:
 import json
 import queue
 import re
+import threading
 import time
 from pathlib import Path
 
+import requests
 from flask import Flask, Response, abort, jsonify, render_template, request, send_from_directory
 
 BASE = Path(__file__).parent.parent
@@ -37,6 +39,24 @@ NUM_TIMES = 12
 
 # quantos picks de diferenca do ADP pra virar veredito (meia rodada)
 LIMIAR_VEREDITO = 6
+
+
+def carregar_env() -> dict:
+    """Le o .env na raiz (CHAVE=valor por linha) sem precisar de biblioteca nova."""
+    caminho = BASE / ".env"
+    variaveis = {}
+    if caminho.exists():
+        for linha in caminho.read_text(encoding="utf-8").splitlines():
+            linha = linha.strip()
+            if not linha or linha.startswith("#") or "=" not in linha:
+                continue
+            chave, valor = linha.split("=", 1)
+            variaveis[chave.strip()] = valor.strip()
+    return variaveis
+
+
+GROQ_API_KEY = carregar_env().get("GROQ_API_KEY", "")
+GROQ_MODELO = "llama-3.1-8b-instant"
 
 app = Flask(__name__)
 
@@ -104,6 +124,103 @@ def calcular_rodada_e_slot(numero_pick: int) -> tuple[int, int]:
     else:
         slot = NUM_TIMES - posicao_na_rodada + 1
     return rodada, slot
+
+
+def eh_fim_de_rodada(numero_pick: int) -> bool:
+    return numero_pick % NUM_TIMES == 0
+
+
+def gerar_comentario_rodada(rodada: int) -> str | None:
+    """Chama o Groq (gratis, rapido) pra uma analise curta da RODADA inteira,
+    no estilo do Tom Brady: saudosista e nostalgico do proprio tempo de jogador,
+    sempre comparando tudo com sua carreira e seus 7 aneis de campeao. Roda em
+    background - se falhar ou demorar, o show nao espera (degradacao
+    silenciosa). Sem chave configurada, nem tenta."""
+    if not GROQ_API_KEY:
+        return None
+
+    picks_da_rodada = [p for p in estado["picks"] if p["rodada"] == rodada]
+    if not picks_da_rodada:
+        return None
+
+    def linha(p):
+        veredito_txt = {"roubo": "ROUBO", "reach": "REACH"}.get(p["veredito"], "dentro do esperado")
+        return f"- Pick {p['pick']}: {p['nome']} ({p['posicao']} - {p['time_nfl']}) - {veredito_txt}"
+
+    lista_picks = "\n".join(linha(p) for p in picks_da_rodada)
+
+    reaches = [p for p in picks_da_rodada if p["veredito"] == "reach"]
+    roubos = [p for p in picks_da_rodada if p["veredito"] == "roubo"]
+
+    def nomeia(ps):
+        return ", ".join(f"{p['nome']} (pick {p['pick']}, ADP {p['adp']:.1f})" for p in ps)
+
+    if reaches or roubos:
+        destaques = "DESTAQUES QUE VOCE PRECISA CITAR NO COMENTARIO:\n"
+        if reaches:
+            destaques += f"- REACH (escolhido bem antes do ADP): {nomeia(reaches)}\n"
+        if roubos:
+            destaques += f"- ROUBO (jogador caiu, saiu bem depois do ADP): {nomeia(roubos)}\n"
+    else:
+        destaques = "Nenhum reach ou roubo grande nessa rodada - mencione que os picks vieram dentro do esperado."
+
+    prompt = (
+        "Voce e o Tom Brady comentando um draft de fantasy football. Voce e "
+        "saudosista e nostalgico do seu proprio tempo como jogador, sempre "
+        "puxando pra sua carreira e seus 7 aneis de campeao do Super Bowl. "
+        "Compara os jogadores de hoje com voce mesmo na epoca de ouro, com um "
+        "certo orgulho e um pouco de deboche.\n\n"
+        f"Analise a RODADA {rodada} de um draft de fantasy football como um "
+        "especialista faria de verdade.\n\n"
+        f"Picks da rodada:\n{lista_picks}\n\n"
+        f"{destaques}\n\n"
+        "OBRIGATORIO: cite pelo nome pelo menos um jogador dos destaques acima "
+        "e explique por que foi reach ou roubo. Nao fique so no "
+        "genérico/nostalgico - traga os nomes. NAO fale os numeros do ADP em "
+        "voz alta no comentario, so use isso como contexto pra voce julgar.\n\n"
+        "Escreva um paragrafo curto (no maximo 4 linhas), em portugues do "
+        "Brasil, na primeira pessoa como o Tom Brady, saudosista e nostalgico "
+        "dos seus titulos, mas citando os jogadores especificos. So o "
+        "paragrafo, sem introducao, sem aspas."
+    )
+
+    try:
+        resposta = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+            json={
+                "model": GROQ_MODELO,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": 220,
+                "temperature": 0.9,
+            },
+            timeout=8,
+        )
+        resposta.raise_for_status()
+        # forca UTF-8 explicito - o requests as vezes decodifica errado (Latin-1)
+        # quando o header Content-Type do Groq nao declara o charset
+        corpo = json.loads(resposta.content.decode("utf-8"))
+        return corpo["choices"][0]["message"]["content"].strip()
+    except Exception as erro:
+        print(f"[comentario de rodada falhou] rodada {rodada}: {erro}")
+        return None
+
+
+def comentar_rodada_em_segundo_plano(numero_pick: int, rodada: int) -> None:
+    """Roda numa thread separada pra nao atrasar a resposta do POST /pick -
+    a regra do projeto e 'rapido pra receber, lento pra revelar'."""
+
+    def tarefa():
+        comentario = gerar_comentario_rodada(rodada)
+        if comentario is None:
+            return
+        # confere de novo - o pick pode ter sido desfeito enquanto a IA pensava
+        pick_atual = next((p for p in estado["picks"] if p["pick"] == numero_pick), None)
+        if pick_atual is not None:
+            pick_atual["comentario_rodada"] = comentario
+            salvar_estado()
+
+    threading.Thread(target=tarefa, daemon=True).start()
 
 
 def calcular_veredito(numero_pick: int, player_id: str) -> tuple[float | None, str | None]:
@@ -275,6 +392,7 @@ def registrar_pick():
     rodada, slot = calcular_rodada_e_slot(numero_pick)
     time_info = TIMES_NFL.get(jogador["time"], {})
     adp, veredito = calcular_veredito(numero_pick, jogador["id"])
+    fim_de_rodada = eh_fim_de_rodada(numero_pick)
 
     pick = {
         "pick": numero_pick,
@@ -287,10 +405,16 @@ def registrar_pick():
         "cor_time": time_info.get("cor", "#333333"),
         "adp": adp,
         "veredito": veredito,
+        "fim_de_rodada": fim_de_rodada,
+        "comentario_rodada": None,
         "ts": time.time(),
     }
     estado["picks"].append(pick)
     salvar_estado()
+
+    if fim_de_rodada:
+        comentar_rodada_em_segundo_plano(numero_pick, rodada)
+
     return jsonify({"ok": True, "pick": pick})
 
 
