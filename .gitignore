@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+
+# dados sensiveis / gerados na hora - nao vao pro repo
+recon/chrome-profile/
+recon/logs/
+
+# assets baixados na vespera (grandes, e o repo nao deveria depender de rede,
+# mas tambem nao precisa versionar centenas de fotos)
+data/img/players/*
+data/img/logos/*
+!data/img/players/.gitkeep
+!data/img/logos/.gitkeep
