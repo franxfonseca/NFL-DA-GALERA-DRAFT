@@ -134,6 +134,7 @@ body {
     padding: 0.3vw;
     background: var(--azul-vivo);
     border-bottom: 2px solid var(--azul-vivo-escuro);
+    border-radius: 10px;
 }
 
 .nome-time {
