@@ -132,8 +132,8 @@ body {
     justify-content: center;
     text-align: center;
     padding: 0.3vw;
-    background: var(--azul-vivo);
-    border-bottom: 2px solid var(--azul-vivo-escuro);
+    background: var(--cor-cabecalho, var(--azul-vivo));
+    border-bottom: 2px solid rgba(0, 0, 0, 0.18);
     border-radius: 10px;
 }
 

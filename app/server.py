@@ -269,6 +269,28 @@ def selecionar_destaques_rodada(picks_da_rodada: list[dict], minimo: int = 3) ->
     return escolhidos
 
 
+def resumo_geral_rodada(picks_da_rodada: list[dict]) -> str:
+    """Frase final fixa (nao gerada por IA - precisa ser exata) resumindo a
+    rodada em uma linha: sem reach/roubo nenhum, ou quais posicoes tiveram
+    reach/roubo. Gerada em codigo pra sempre bater com os vereditos reais,
+    em vez de confiar no modelo pra resumir certo."""
+    reaches = [p for p in picks_da_rodada if p["veredito"] == "reach"]
+    roubos = [p for p in picks_da_rodada if p["veredito"] == "roubo"]
+
+    if not reaches and not roubos:
+        return "Sem reachs ou roubos nessa rodada."
+
+    partes = []
+    if reaches:
+        posicoes = ", ".join(sorted({p["posicao"] for p in reaches}))
+        partes.append(f"os reachs nas posições {posicoes}")
+    if roubos:
+        posicoes = ", ".join(sorted({p["posicao"] for p in roubos}))
+        partes.append(f"os roubos nas posições {posicoes}")
+
+    return "Tudo certo com a rodada, menos " + " e ".join(partes) + "."
+
+
 def gerar_comentario_rodada(rodada: int) -> str | None:
     """Chama o Groq (gratis, rapido) pra uma analise curta da RODADA inteira,
     no estilo do Tom Brady: foco principal nas QUALIDADES dos jogadores
@@ -331,7 +353,11 @@ def gerar_comentario_rodada(rodada: int) -> str | None:
     # que cobrir varios reach/roubo na mesma rodada. Ainda roda em segundo
     # plano, entao a latencia extra nao trava o show
     max_tokens_comentario = min(500, 130 + 60 * len(selecionados))
-    return chamar_groq(prompt, GROQ_MODELO_FINAL, max_tokens=max_tokens_comentario, timeout=15)
+    resposta = chamar_groq(prompt, GROQ_MODELO_FINAL, max_tokens=max_tokens_comentario, timeout=15)
+    if resposta is None:
+        return None
+
+    return f"{resposta} {resumo_geral_rodada(picks_da_rodada)}"
 
 
 def narrar_pick_em_segundo_plano(numero_pick: int, nome_jogador: str) -> None:
@@ -612,7 +638,8 @@ def stream():
 
 @app.route("/times", methods=["POST"])
 def salvar_times():
-    """Edita nome do time e/ou dono de um slot. Body: {"slot": 1, "nome_time": "...", "dono": "..."}"""
+    """Edita nome, dono e/ou cor do cabecalho de um slot no board.
+    Body: {"slot": 1, "nome_time": "...", "dono": "...", "cor_cabecalho": "#1456d6"}"""
     dados = request.get_json(silent=True) or {}
     slot = str(dados.get("slot", ""))
     if slot not in {str(n) for n in range(1, NUM_TIMES + 1)}:
@@ -623,6 +650,8 @@ def salvar_times():
         info["nome_time"] = dados["nome_time"].strip()
     if "dono" in dados:
         info["dono"] = dados["dono"].strip()
+    if "cor_cabecalho" in dados:
+        info["cor_cabecalho"] = dados["cor_cabecalho"].strip()
 
     salvar_estado()
     return jsonify({"ok": True, "times": estado["times"]})

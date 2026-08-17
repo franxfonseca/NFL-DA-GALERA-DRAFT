@@ -198,6 +198,15 @@ function atualizarCabecalhos(times) {
         const info = times[slot] || {};
         coluna.querySelector(".nome-time").textContent = info.nome_time || `Time ${slot}`;
         coluna.querySelector(".nome-dono").textContent = info.dono || "";
+
+        // cor do cabecalho e opcional - sem escolha do operador, cai no azul
+        // vivo padrao definido no CSS (var(--azul-vivo))
+        const cabecalho = coluna.querySelector(".coluna-cabecalho");
+        if (info.cor_cabecalho) {
+            cabecalho.style.setProperty("--cor-cabecalho", info.cor_cabecalho);
+        } else {
+            cabecalho.style.removeProperty("--cor-cabecalho");
+        }
     });
 }
 
