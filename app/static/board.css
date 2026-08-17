@@ -42,7 +42,7 @@ body {
 #board {
     --altura-card: 4.6vw;
     display: grid;
-    grid-template-columns: 55px repeat(12, 234px); /* rodadas -30%, times -10% */
+    grid-template-columns: 58px repeat(12, 234px); /* rodadas +5% (era 55px), times -10% */
     align-items: start; /* colunas nao esticam pra altura toda - cada uma cresce so o tanto que precisa */
     width: 100vw;
     flex: 1;
