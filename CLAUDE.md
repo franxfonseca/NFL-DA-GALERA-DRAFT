@@ -42,8 +42,12 @@ regra, a feature é cortada.
 - **Frontend:** um HTML fullscreen, vanilla JS, sem build step
 - **Transporte:** Server-Sent Events (`EventSource`) — não websocket, não polling
 - **Captura:** Playwright + Chromium com perfil persistente, processo separado
-- **Voz:** `speechSynthesis` do navegador (local, instantâneo, grátis)
-- **IA:** modelo rápido para comentário por pick; modelo bom para análise final
+- **Voz:** ElevenLabs (voz "Arnold", 0.9x) — decisão consciente de trocar o
+  custo zero original por qualidade de narração. `speechSynthesis` do
+  navegador continua como fallback automático se a API falhar/demorar
+  (nunca fica em silêncio) e é o que narra o pick quando o áudio bonito não
+  fica pronto a tempo (regra 5 não abre mão de latência zero na narração do pick)
+- **IA:** modelo rápido (Groq) para comentário por rodada; modelo maior para análise final
 - **Dados:** JSON em disco
 
 Sem Docker, sem deploy, sem banco, sem framework de frontend.
