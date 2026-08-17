@@ -103,6 +103,9 @@ function criarCardPick(pick) {
     img.src = `/img/players/${pick.player_id}.png`;
     img.alt = pick.nome;
 
+    const texto = document.createElement("div");
+    texto.className = "texto";
+
     const nome = document.createElement("div");
     nome.className = "nome";
     nome.textContent = pick.nome;
@@ -113,9 +116,12 @@ function criarCardPick(pick) {
 
     const rodada = document.createElement("div");
     rodada.className = "rodada";
-    rodada.textContent = `Rodada ${pick.rodada} - Pick ${pick.pick}`;
+    // sem "Rodada X" aqui - ja fica obvio pela posicao vertical na coluna,
+    // e o card e estreito demais pra caber o texto inteiro sem cortar
+    rodada.textContent = `Pick ${pick.pick}`;
 
-    card.append(img, nome, info, rodada);
+    texto.append(nome, info, rodada);
+    card.append(img, texto);
     return card;
 }
 
