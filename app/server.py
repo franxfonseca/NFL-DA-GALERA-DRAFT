@@ -317,20 +317,20 @@ def gerar_comentario_rodada(rodada: int) -> str | None:
         "elogiar as qualidades. NAO cite nenhum outro jogador da rodada alem "
         "desses. NAO fale os numeros do ADP em voz alta no comentario, so use "
         "isso como contexto pra voce julgar.\n\n"
-        "Escreva um paragrafo em portugues do Brasil, na primeira pessoa como "
-        "o Tom Brady - uma ou duas frases curtas pra cada jogador da lista, "
-        "sem se alongar demais em nenhum deles individualmente. Pode puxar "
-        "pra sua carreira quando couber naturalmente, sem forcar. Responda "
-        "APENAS com o paragrafo do Brady - sem introducao, sem aspas, sem "
-        "nenhuma frase de fechamento tipo 'posso continuar' ou pedindo o "
-        "proximo passo."
+        "Escreva um paragrafo CURTO e SUSCINTO em portugues do Brasil, na "
+        "primeira pessoa como o Tom Brady - UMA FRASE SO pra cada jogador da "
+        "lista, direto ao ponto, sem enrolar. Pode puxar pra sua carreira "
+        "quando couber naturalmente, sem forcar, mas sem virar uma frase "
+        "extra so pra isso. Responda APENAS com o paragrafo do Brady - sem "
+        "introducao, sem aspas, sem nenhuma frase de fechamento tipo 'posso "
+        "continuar' ou pedindo o proximo passo."
     )
 
     # modelo maior (o mesmo da analise final) - o rapido (8B) comecava a
     # inventar jogador fora da lista ou perder o tom critico quando tinha
     # que cobrir varios reach/roubo na mesma rodada. Ainda roda em segundo
     # plano, entao a latencia extra nao trava o show
-    max_tokens_comentario = min(700, 200 + 100 * len(selecionados))
+    max_tokens_comentario = min(500, 130 + 60 * len(selecionados))
     return chamar_groq(prompt, GROQ_MODELO_FINAL, max_tokens=max_tokens_comentario, timeout=15)
 
 
