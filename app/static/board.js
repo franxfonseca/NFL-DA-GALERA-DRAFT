@@ -14,6 +14,31 @@ let audioCtx = null;
 // (nao no servidor, porque cada dispositivo tem seu proprio conjunto de vozes)
 let vozEscolhida = null;
 
+// mutar so afeta esse navegador (o board continua gerando/recebendo audio
+// normal) - fica salvo entre recarregamentos da pagina
+let mutado = localStorage.getItem("narracaoMutada") === "1";
+let audioNarracaoAtual = null; // ultimo Audio() criado, pra poder parar na hora se mutar no meio da fala
+
+function atualizarBotaoMutar() {
+    const botao = document.getElementById("btn-mutar");
+    botao.textContent = mutado ? "🔇" : "🔊";
+    botao.title = mutado ? "Ativar narração" : "Mutar narração";
+    botao.classList.toggle("mutado", mutado);
+}
+
+document.getElementById("btn-mutar").addEventListener("click", () => {
+    mutado = !mutado;
+    localStorage.setItem("narracaoMutada", mutado ? "1" : "0");
+    atualizarBotaoMutar();
+    if (mutado) {
+        // corta na hora qualquer fala em andamento, nao so a proxima
+        speechSynthesis.cancel();
+        if (audioNarracaoAtual) audioNarracaoAtual.pause();
+    }
+});
+
+atualizarBotaoMutar();
+
 function popularVozes() {
     const select = document.getElementById("select-voz");
     const vozes = speechSynthesis.getVoices();
@@ -206,6 +231,7 @@ function esperar(ms) {
 function falar(texto) {
     // TTS local via navegador - instantaneo, nao depende de rede.
     // Regra do projeto: falha aqui nao pode travar o show.
+    if (mutado) return;
     try {
         const utter = new SpeechSynthesisUtterance(texto);
         utter.lang = "pt-BR";
@@ -222,11 +248,13 @@ function narrarPick(urlAudio, textoFallback) {
     // toca o audio "bonito" da ElevenLabs (gerado em background no servidor
     // assim que o pick foi registrado) - se ainda nao tiver pronto ou falhar
     // ao carregar/tocar, cai pro TTS local na hora (nunca fica em silencio)
+    if (mutado) return;
     if (!urlAudio) {
         falar(textoFallback);
         return;
     }
     const audio = new Audio(urlAudio);
+    audioNarracaoAtual = audio;
     audio.onerror = () => falar(textoFallback);
     audio.play().catch(() => falar(textoFallback));
 }

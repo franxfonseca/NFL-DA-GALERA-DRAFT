@@ -92,8 +92,29 @@ body {
 }
 
 .coluna-rodadas .nome-time {
-    font-size: 0.6vw; /* coluna ficou mais estreita ainda - "RODADAS" precisa de fonte menor */
+    font-size: 0.46vw; /* coluna ficou mais estreita ainda - "RODADAS" precisa de fonte menor */
     white-space: nowrap;
+}
+
+/* botao de mutar a narracao - fica no canto fixo, sempre visivel, no
+   espaco logo abaixo de "RODADAS" que antes ficava vazio */
+#btn-mutar {
+    margin-top: 2px;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 0.85vw;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.85;
+}
+
+#btn-mutar:hover {
+    opacity: 1;
+}
+
+#btn-mutar.mutado {
+    opacity: 0.55;
 }
 
 /* altura fixa (nao so o tanto que o texto ocupa) - sem isso, o cabecalho
@@ -211,15 +232,18 @@ body {
     text-overflow: ellipsis;
 }
 
+/* mesmo azul solido do cabecalho (.coluna-cabecalho) - a coluna de rodadas
+   inteira (cabecalho + linhas) fica com um unico visual, formando o "L"
+   azul fixo (linha 1 + coluna 1) que fica sempre visivel enquanto rola */
 .rodada-label {
     height: var(--altura-card);
     min-height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #e3ecfb;
+    background: var(--azul-nfl);
     border-radius: 4px;
-    color: var(--azul-nfl);
+    color: #ffffff;
     font-size: 0.85vw;
     font-weight: 700;
     letter-spacing: 0.03em;
