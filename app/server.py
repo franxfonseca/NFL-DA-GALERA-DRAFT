@@ -65,7 +65,62 @@ GROQ_API_KEY = carregar_env().get("GROQ_API_KEY", "")
 GROQ_MODELO = "llama-3.1-8b-instant"  # rapido - comentario de rodada, ao vivo
 GROQ_MODELO_FINAL = "llama-3.3-70b-versatile"  # maior - analise final, sem pressa
 
+ELEVENLABS_API_KEY = carregar_env().get("ELEVENLABS_API_KEY", "")
+ELEVENLABS_VOICE_ID = "VR6AewLTigWG4xSOukaG"  # Arnold - grave e energica, escolhida pelo Francisco
+ELEVENLABS_MODELO = "eleven_multilingual_v2"
+ELEVENLABS_VELOCIDADE = 0.9
+
+AUDIO_DIR = BASE / "app" / "audio_cache"
+AUDIO_DIR.mkdir(exist_ok=True)
+
+# so pontuacao (virgula, reticencias, travessao) pra pausa/entonacao - o
+# Francisco testou a tag <break time="Xs" /> e preferiu sem, soa mais natural
+MENSAGEM_BOAS_VINDAS = (
+    "E aí, pessoal! Tom Brady aqui... sete anéis no currículo, então pode "
+    "confiar que eu entendo bem o que é vencer. "
+    "É uma honra dar as boas-vindas ao draft da NFL da Galera 2026, "
+    "uma liga de fantasy anual com história de verdade. "
+    "No retrospecto: Enzo, proprietário dos sempre valentes Mean Machine, "
+    "campeão em 2022. Francisco, a comando do grande Siroks Da Massa, "
+    "bicampeão em 2023 e 2024. E o Vaz, a frente da Tropa do Nada Mal, "
+    "com três vice-campeonatos consecutivos... um recorde e tanto pra franquia - "
+    "vamos ver se ele quebra essa fila esse ano, se Deus quiser. "
+    "E o Igão? Olha... eu ia falar bonito, mas os números não mentem: "
+    "nunca nem chegou numa final. Mas relaxa, Igão, todo mundo merece uma "
+    "décima segunda chance - quem sabe esse ano é o seu ano de quebrar o jejum, hein? "
+    "Desejo um ótimo draft pra todos vocês, e pode ficar tranquilo que eu vou "
+    "acompanhar a galera a noite inteira. Vamos nessa!"
+)
+
 app = Flask(__name__)
+
+
+def gerar_audio(texto: str, nome_arquivo: str) -> bool:
+    """Gera audio via ElevenLabs e salva em AUDIO_DIR - se o arquivo ja existe,
+    nem chama a API de novo (os creditos sao limitados). Falha silenciosa:
+    quem chama decide o fallback (speechSynthesis local no navegador)."""
+    caminho = AUDIO_DIR / nome_arquivo
+    if caminho.exists():
+        return True
+    if not ELEVENLABS_API_KEY:
+        return False
+    try:
+        resposta = requests.post(
+            f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}",
+            headers={"xi-api-key": ELEVENLABS_API_KEY, "Content-Type": "application/json"},
+            json={
+                "text": texto,
+                "model_id": ELEVENLABS_MODELO,
+                "voice_settings": {"speed": ELEVENLABS_VELOCIDADE},
+            },
+            timeout=20,
+        )
+        resposta.raise_for_status()
+        caminho.write_bytes(resposta.content)
+        return True
+    except Exception as erro:
+        print(f"[audio ElevenLabs falhou] {nome_arquivo}: {erro}")
+        return False
 
 
 def carregar_json(nome_arquivo: str) -> dict:
@@ -220,6 +275,23 @@ def gerar_comentario_rodada(rodada: int) -> str | None:
     return chamar_groq(prompt, GROQ_MODELO, max_tokens=220)
 
 
+def narrar_pick_em_segundo_plano(numero_pick: int, nome_jogador: str) -> None:
+    """Gera o audio ElevenLabs do anuncio do pick em background. A narracao
+    imediata (speechSynthesis local) sempre dispara na hora no navegador -
+    isso aqui e so o audio "bonito" que substitui ela quando fica pronto a
+    tempo (a regra do projeto e nunca travar esperando rede)."""
+
+    def tarefa():
+        texto = f"Escolha número {numero_pick}. {nome_jogador}."
+        if gerar_audio(texto, f"pick_{numero_pick}.mp3"):
+            pick_atual = next((p for p in estado["picks"] if p["pick"] == numero_pick), None)
+            if pick_atual is not None:
+                pick_atual["audio_pick"] = f"/audio/pick_{numero_pick}.mp3"
+                salvar_estado()
+
+    threading.Thread(target=tarefa, daemon=True).start()
+
+
 def gerar_analise_final() -> dict | None:
     """ETAPA 8 - uma chamada so, com o modelo maior (GROQ_MODELO_FINAL), sem
     pressa de latencia (roda so quando o operador clica em "Finalizar draft").
@@ -289,10 +361,12 @@ def comentar_rodada_em_segundo_plano(numero_pick: int, rodada: int) -> None:
         comentario = gerar_comentario_rodada(rodada)
         if comentario is None:
             return
+        audio_ok = gerar_audio(comentario, f"rodada_{rodada}.mp3")
         # confere de novo - o pick pode ter sido desfeito enquanto a IA pensava
         pick_atual = next((p for p in estado["picks"] if p["pick"] == numero_pick), None)
         if pick_atual is not None:
             pick_atual["comentario_rodada"] = comentario
+            pick_atual["audio_rodada"] = f"/audio/rodada_{rodada}.mp3" if audio_ok else None
             salvar_estado()
 
     threading.Thread(target=tarefa, daemon=True).start()
@@ -307,6 +381,14 @@ def finalizar_draft_em_segundo_plano() -> None:
 
     def tarefa():
         analise = gerar_analise_final()
+        if analise:
+            if analise.get("resumo_geral"):
+                if gerar_audio(analise["resumo_geral"], "resumo_final.mp3"):
+                    analise["audio_resumo"] = "/audio/resumo_final.mp3"
+            for slot, dados in (analise.get("times") or {}).items():
+                if dados.get("comentario"):
+                    if gerar_audio(dados["comentario"], f"time_{slot}.mp3"):
+                        dados["audio"] = f"/audio/time_{slot}.mp3"
         estado["analise_final"] = analise
         estado["gerando_analise_final"] = False
         salvar_estado()
@@ -407,7 +489,7 @@ def raiz():
 
 @app.route("/home")
 def home():
-    return render_template("home.html")
+    return render_template("home.html", mensagem_boas_vindas=MENSAGEM_BOAS_VINDAS)
 
 
 @app.route("/comando")
@@ -523,10 +605,13 @@ def registrar_pick():
         "veredito": veredito,
         "fim_de_rodada": fim_de_rodada,
         "comentario_rodada": None,
+        "audio_pick": None,
         "ts": time.time(),
     }
     estado["picks"].append(pick)
     salvar_estado()
+
+    narrar_pick_em_segundo_plano(numero_pick, jogador["nome"])
 
     if fim_de_rodada:
         comentar_rodada_em_segundo_plano(numero_pick, rodada)
@@ -560,6 +645,25 @@ def finalizar():
         return jsonify({"ok": False, "erro": "analise ja esta sendo gerada"}), 400
     finalizar_draft_em_segundo_plano()
     return jsonify({"ok": True})
+
+
+@app.route("/audio/boas-vindas.mp3")
+def audio_boas_vindas():
+    """So essa e gerada na hora (lazy) em vez de em background - e um texto
+    fixo, sem pressa nenhuma de latencia, gerada uma vez e cacheada pra sempre."""
+    gerar_audio(MENSAGEM_BOAS_VINDAS, "boas-vindas.mp3")
+    caminho = AUDIO_DIR / "boas-vindas.mp3"
+    if caminho.exists():
+        return send_from_directory(AUDIO_DIR, "boas-vindas.mp3")
+    abort(404)
+
+
+@app.route("/audio/<nome_arquivo>")
+def audio(nome_arquivo):
+    caminho = AUDIO_DIR / nome_arquivo
+    if caminho.exists():
+        return send_from_directory(AUDIO_DIR, nome_arquivo)
+    abort(404)
 
 
 @app.route("/img/players/<player_id>.png")

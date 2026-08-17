@@ -166,36 +166,22 @@
         <div id="grade-times"></div>
     </div>
 
+    <script src="{{ url_for('static', filename='narrador.js') }}"></script>
     <script>
-        // fala so quando o operador clica no icone - nunca sozinho
-        let vozEscolhida = null;
+        // fala so quando o operador clica no icone - nunca sozinho.
+        // narrar() (de narrador.js) toca o audio ElevenLabs pre-gerado, ou
+        // cai pro TTS local automaticamente se nao existir/falhar.
+        let audioAtual = null;
         let botaoFalando = null;
 
-        function pegarVoz() {
-            if (vozEscolhida) return vozEscolhida;
-            vozEscolhida = speechSynthesis.getVoices().find((v) => v.lang.startsWith("pt")) || null;
-            return vozEscolhida;
-        }
+        function falar(urlAudio, textoFallback, botao) {
+            if (audioAtual) audioAtual.pause();
+            speechSynthesis.cancel();
+            if (botaoFalando) botaoFalando.classList.remove("falando");
 
-        function falar(texto, botao) {
-            try {
-                speechSynthesis.cancel(); // corta qualquer fala anterior antes de comecar essa
-                if (botaoFalando) botaoFalando.classList.remove("falando");
-
-                const utter = new SpeechSynthesisUtterance(texto);
-                utter.lang = "pt-BR";
-                const voz = pegarVoz();
-                if (voz) utter.voice = voz;
-
-                botao.classList.add("falando");
-                botaoFalando = botao;
-                utter.onend = () => botao.classList.remove("falando");
-                utter.onerror = () => botao.classList.remove("falando");
-
-                speechSynthesis.speak(utter);
-            } catch (erro) {
-                console.error("falha no TTS:", erro);
-            }
+            botao.classList.add("falando");
+            botaoFalando = botao;
+            audioAtual = narrar(urlAudio, textoFallback, () => botao.classList.remove("falando"));
         }
 
         function corDaNota(nota) {
@@ -208,7 +194,7 @@
 
             document.getElementById("resumo-geral-texto").textContent = analise.resumo_geral || "";
             document.getElementById("btn-ouvir-resumo").onclick = (evento) => {
-                falar(analise.resumo_geral || "", evento.currentTarget);
+                falar(analise.audio_resumo, analise.resumo_geral || "", evento.currentTarget);
             };
 
             const grade = document.getElementById("grade-times");
@@ -257,7 +243,7 @@
                 botao.textContent = "🔊";
                 botao.onclick = (evento) => {
                     evento.stopPropagation(); // nao expande/colapsa o elenco ao clicar em ouvir
-                    falar(`${nomeTime}, nota ${dados.nota}. ${dados.comentario || ""}`, evento.currentTarget);
+                    falar(dados.audio, `${nomeTime}, nota ${dados.nota}. ${dados.comentario || ""}`, evento.currentTarget);
                 };
 
                 grupoOuvir.append(foto, botao);

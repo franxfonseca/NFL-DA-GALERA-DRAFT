@@ -107,35 +107,21 @@
     <div id="estado-vazio" class="oculto">Nenhuma rodada terminada ainda - o comentário sai assim que o último pick da rodada 1 acontecer.</div>
     <div id="lista"></div>
 
+    <script src="{{ url_for('static', filename='narrador.js') }}"></script>
     <script>
-        let vozEscolhida = null;
+        // toca o audio ElevenLabs pre-gerado (narrar(), de narrador.js), ou
+        // cai pro TTS local automaticamente se nao existir/falhar
+        let audioAtual = null;
         let botaoFalando = null;
 
-        function pegarVoz() {
-            if (vozEscolhida) return vozEscolhida;
-            vozEscolhida = speechSynthesis.getVoices().find((v) => v.lang.startsWith("pt")) || null;
-            return vozEscolhida;
-        }
+        function falar(urlAudio, textoFallback, botao) {
+            if (audioAtual) audioAtual.pause();
+            speechSynthesis.cancel();
+            if (botaoFalando) botaoFalando.classList.remove("falando");
 
-        function falar(texto, botao) {
-            try {
-                speechSynthesis.cancel();
-                if (botaoFalando) botaoFalando.classList.remove("falando");
-
-                const utter = new SpeechSynthesisUtterance(texto);
-                utter.lang = "pt-BR";
-                const voz = pegarVoz();
-                if (voz) utter.voice = voz;
-
-                botao.classList.add("falando");
-                botaoFalando = botao;
-                utter.onend = () => botao.classList.remove("falando");
-                utter.onerror = () => botao.classList.remove("falando");
-
-                speechSynthesis.speak(utter);
-            } catch (erro) {
-                console.error("falha no TTS:", erro);
-            }
+            botao.classList.add("falando");
+            botaoFalando = botao;
+            audioAtual = narrar(urlAudio, textoFallback, () => botao.classList.remove("falando"));
         }
 
         function renderizar(estado) {
@@ -173,7 +159,7 @@
                 botao.className = "btn-ouvir";
                 botao.title = `Ouvir análise da rodada ${pick.rodada}`;
                 botao.textContent = "🔊";
-                botao.onclick = (evento) => falar(pick.comentario_rodada, evento.currentTarget);
+                botao.onclick = (evento) => falar(pick.audio_rodada, pick.comentario_rodada, evento.currentTarget);
 
                 const rotulo = document.createElement("span");
                 rotulo.className = "rotulo";

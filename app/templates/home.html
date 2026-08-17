@@ -97,40 +97,20 @@
 
     <a id="btn-board" href="/board">Entrar no Board</a>
 
+    <script src="{{ url_for('static', filename='narrador.js') }}"></script>
     <script>
-        const MENSAGEM = "E aí, pessoal! Tom Brady aqui - sete anéis no currículo, então pode " +
-            "confiar que eu entendo bem o que é vencer. É uma honra dar as boas-vindas ao draft " +
-            "da NFL da Galera 2026, uma liga de fantasy anual com história de verdade. No " +
-            "retrospecto: Enzo, proprietário dos sempre valentes Mean Machine, campeão em 2022; " +
-            "Francisco, a comando do grande Siroks Da Massa, bicampeão em 2023 e 2024; e o Vaz, " +
-            "a frente da Tropa do Nada Mal, com três vice-campeonatos consecutivos, um recorde " +
-            "e tanto pra franquia - vamos ver se ele quebra essa fila esse ano, se Deus quiser. " +
-            "E o Igão? Olha, eu ia falar bonito, mas os números não mentem: nunca nem chegou " +
-            "numa final. Mas relaxa, Igão, todo mundo merece uma décima segunda chance - quem " +
-            "sabe esse ano é o seu ano de quebrar o jejum, hein? Desejo um ótimo draft pra todos " +
-            "vocês, e pode ficar tranquilo que eu vou acompanhar a galera a noite inteira. " +
-            "Vamos nessa!";
+        // a mensagem vem do servidor com tags <break> pra pausa na ElevenLabs -
+        // pra exibir na tela e pro fallback (TTS local, que nao entende a tag),
+        // tira as tags e sobra so o texto puro
+        const MENSAGEM_CRUA = {{ mensagem_boas_vindas | tojson }};
+        const MENSAGEM_LIMPA = MENSAGEM_CRUA.replace(/<break[^>]*\/?>/g, " ").replace(/\s+/g, " ").trim();
 
-        document.getElementById("texto-boas-vindas").textContent = MENSAGEM;
+        document.getElementById("texto-boas-vindas").textContent = MENSAGEM_LIMPA;
 
-        let vozEscolhida = null;
         document.getElementById("btn-ouvir").addEventListener("click", (evento) => {
-            try {
-                speechSynthesis.cancel();
-                const botao = evento.currentTarget;
-                const utter = new SpeechSynthesisUtterance(MENSAGEM);
-                utter.lang = "pt-BR";
-                if (!vozEscolhida) {
-                    vozEscolhida = speechSynthesis.getVoices().find((v) => v.lang.startsWith("pt")) || null;
-                }
-                if (vozEscolhida) utter.voice = vozEscolhida;
-                botao.classList.add("falando");
-                utter.onend = () => botao.classList.remove("falando");
-                utter.onerror = () => botao.classList.remove("falando");
-                speechSynthesis.speak(utter);
-            } catch (erro) {
-                console.error("falha no TTS:", erro);
-            }
+            const botao = evento.currentTarget;
+            botao.classList.add("falando");
+            narrar("/audio/boas-vindas.mp3", MENSAGEM_LIMPA, () => botao.classList.remove("falando"));
         });
     </script>
 </body>

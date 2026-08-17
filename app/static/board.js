@@ -157,6 +157,19 @@ function falar(texto) {
     }
 }
 
+function narrarPick(urlAudio, textoFallback) {
+    // toca o audio "bonito" da ElevenLabs (gerado em background no servidor
+    // assim que o pick foi registrado) - se ainda nao tiver pronto ou falhar
+    // ao carregar/tocar, cai pro TTS local na hora (nunca fica em silencio)
+    if (!urlAudio) {
+        falar(textoFallback);
+        return;
+    }
+    const audio = new Audio(urlAudio);
+    audio.onerror = () => falar(textoFallback);
+    audio.play().catch(() => falar(textoFallback));
+}
+
 function tocarSom(veredito) {
     // beep gerado na hora (Web Audio) - sem depender de arquivo de audio.
     // reaproveita o audioCtx desbloqueado no clique inicial; sem ele, nao
@@ -200,7 +213,10 @@ async function revelarPick(pick) {
     infoEl.textContent = `${pick.posicao} - ${pick.time_nfl}`;
 
     overlay.classList.add("ativa");
-    falar(`Escolha número ${pick.pick}. ${pick.nome}.`);
+    // regra do projeto: narracao dispara IMEDIATAMENTE, sem esperar rede -
+    // se o audio ElevenLabs desse pick ja estiver pronto (raro, a geracao
+    // leva 1-2s), usa ele; senao cai pro TTS local na hora, sem atraso
+    narrarPick(pick.audio_pick, `Escolha número ${pick.pick}. ${pick.nome}.`);
 
     // 0s: anuncio + foto borrada entrando (ja aconteceu acima)
     await esperar(2000);

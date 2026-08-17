@@ -21,3 +21,6 @@ capture/diag_shots/
 
 # chave de API - nunca vai pro repo
 .env
+
+# audio gerado pela ElevenLabs - cache local, credito limitado, nao e codigo
+app/audio_cache/
