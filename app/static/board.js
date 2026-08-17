@@ -100,6 +100,7 @@ function criarCardPick(pick) {
     card.style.setProperty("--cor-time", pick.cor_time);
 
     const img = document.createElement("img");
+    img.className = "foto";
     img.src = `/img/players/${pick.player_id}.png`;
     img.alt = pick.nome;
 
@@ -121,7 +122,16 @@ function criarCardPick(pick) {
     rodada.textContent = `Pick ${pick.pick}`;
 
     texto.append(nome, info, rodada);
-    card.append(img, texto);
+
+    const logo = document.createElement("img");
+    logo.className = "logo-time";
+    logo.src = `/img/logos/${pick.time_nfl}.png`;
+    logo.alt = pick.time_nfl;
+    // sem logo baixado pra esse time - some em vez de mostrar o icone
+    // quebrado (degradacao silenciosa, regra 3 do projeto)
+    logo.onerror = () => { logo.style.display = "none"; };
+
+    card.append(img, texto, logo);
     return card;
 }
 
