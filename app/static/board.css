@@ -161,15 +161,18 @@ body {
    independente do tanto de texto (nome longo trunca com reticencias em vez
    de esticar o card). Altura vem de --altura-card (definida em #board) pra
    ficar sempre igual a .rodada-label e as linhas alinharem entre as colunas */
+/* sem caixa branca por card - o board fica todo no cinza da coluna, e a
+   unica linha demarcando cada rodada e essa borda branca embaixo do card
+   (ver .rodada-label pra mesma linha na coluna de rodadas, alinhando a
+   "linha" pra parecer continua por toda a tabela) */
 .pick-card {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 0.5vw;
-    background: var(--branco-painel);
-    border: 1px solid var(--cinza-borda);
+    background: transparent;
     border-left: 4px solid var(--cor-time, #444);
-    border-radius: 4px;
+    border-bottom: 2px solid #ffffff;
     padding: 0.3vw 0.5vw;
     height: var(--altura-card);
     min-height: 56px;
@@ -243,7 +246,7 @@ body {
     align-items: center;
     justify-content: center;
     background: var(--cinza-borda);
-    border-radius: 4px;
+    border-bottom: 2px solid #ffffff; /* mesma linha branca dos pick-cards, pra ficar continua na tabela toda */
     color: var(--texto-principal);
     font-size: 0.85vw;
     font-weight: 700;
