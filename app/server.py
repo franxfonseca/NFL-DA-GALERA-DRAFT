@@ -29,6 +29,7 @@ Uso:
     python app/server.py
 """
 
+import hashlib
 import json
 import queue
 import re
@@ -93,6 +94,15 @@ MENSAGEM_BOAS_VINDAS = (
 )
 
 app = Flask(__name__)
+
+
+def nome_audio(prefixo: str, texto: str) -> str:
+    """Nome do arquivo de audio inclui um hash do TEXTO, nao so a posicao
+    (pick 12, rodada 1...). Sem isso, desfazer um pick e escolher outro
+    jogador pro mesmo numero reaproveitaria o audio antigo (do jogador
+    errado) - o board mostraria certo mas a narracao falaria o nome errado."""
+    hash_texto = hashlib.md5(texto.encode("utf-8")).hexdigest()[:10]
+    return f"{prefixo}_{hash_texto}.mp3"
 
 
 def gerar_audio(texto: str, nome_arquivo: str) -> bool:
@@ -165,6 +175,12 @@ estado.setdefault("gerando_analise_final", False)
 def salvar_estado() -> None:
     ARQUIVO_ESTADO.write_text(json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8")
     notificar_ouvintes()
+
+
+# protege o "numero_pick = len(picks) + 1" de /pick - sem isso, dois picks
+# chegando quase juntos (ex: manual e automatico coincidindo) poderiam
+# calcular o mesmo numero e um pick se perder
+_lock_pick = threading.Lock()
 
 
 # uma fila por cliente conectado em /stream (SSE). Toda mudanca de estado
@@ -283,10 +299,11 @@ def narrar_pick_em_segundo_plano(numero_pick: int, nome_jogador: str) -> None:
 
     def tarefa():
         texto = f"Escolha número {numero_pick}. {nome_jogador}."
-        if gerar_audio(texto, f"pick_{numero_pick}.mp3"):
+        arquivo = nome_audio(f"pick_{numero_pick}", texto)
+        if gerar_audio(texto, arquivo):
             pick_atual = next((p for p in estado["picks"] if p["pick"] == numero_pick), None)
             if pick_atual is not None:
-                pick_atual["audio_pick"] = f"/audio/pick_{numero_pick}.mp3"
+                pick_atual["audio_pick"] = f"/audio/{arquivo}"
                 salvar_estado()
 
     threading.Thread(target=tarefa, daemon=True).start()
@@ -361,12 +378,13 @@ def comentar_rodada_em_segundo_plano(numero_pick: int, rodada: int) -> None:
         comentario = gerar_comentario_rodada(rodada)
         if comentario is None:
             return
-        audio_ok = gerar_audio(comentario, f"rodada_{rodada}.mp3")
+        arquivo = nome_audio(f"rodada_{rodada}", comentario)
+        audio_ok = gerar_audio(comentario, arquivo)
         # confere de novo - o pick pode ter sido desfeito enquanto a IA pensava
         pick_atual = next((p for p in estado["picks"] if p["pick"] == numero_pick), None)
         if pick_atual is not None:
             pick_atual["comentario_rodada"] = comentario
-            pick_atual["audio_rodada"] = f"/audio/rodada_{rodada}.mp3" if audio_ok else None
+            pick_atual["audio_rodada"] = f"/audio/{arquivo}" if audio_ok else None
             salvar_estado()
 
     threading.Thread(target=tarefa, daemon=True).start()
@@ -383,12 +401,14 @@ def finalizar_draft_em_segundo_plano() -> None:
         analise = gerar_analise_final()
         if analise:
             if analise.get("resumo_geral"):
-                if gerar_audio(analise["resumo_geral"], "resumo_final.mp3"):
-                    analise["audio_resumo"] = "/audio/resumo_final.mp3"
+                arquivo = nome_audio("resumo_final", analise["resumo_geral"])
+                if gerar_audio(analise["resumo_geral"], arquivo):
+                    analise["audio_resumo"] = f"/audio/{arquivo}"
             for slot, dados in (analise.get("times") or {}).items():
                 if dados.get("comentario"):
-                    if gerar_audio(dados["comentario"], f"time_{slot}.mp3"):
-                        dados["audio"] = f"/audio/time_{slot}.mp3"
+                    arquivo = nome_audio(f"time_{slot}", dados["comentario"])
+                    if gerar_audio(dados["comentario"], arquivo):
+                        dados["audio"] = f"/audio/{arquivo}"
         estado["analise_final"] = analise
         estado["gerando_analise_final"] = False
         salvar_estado()
@@ -572,44 +592,49 @@ def registrar_pick():
     erro = None
     jogador = None
 
-    if player_id:
-        jogador = buscar_jogador_por_id(player_id)
-        if not jogador:
-            erro = f"id de jogador desconhecido: {player_id}"
-        elif jogador["id"] in jogadores_draftados():
-            erro = f"{jogador['nome']} ja foi draftado"
-    elif nome:
-        jogador, erro = buscar_jogador_por_nome(nome)
-    else:
-        erro = "informe 'nome' ou 'player_id'"
+    # tudo isso protegido pelo lock: da checagem de "ja foi draftado" ate
+    # calcular o numero do pick e salvar - sem isso, dois picks chegando
+    # quase juntos poderiam passar pela checagem juntos ou calcular o mesmo
+    # numero de pick
+    with _lock_pick:
+        if player_id:
+            jogador = buscar_jogador_por_id(player_id)
+            if not jogador:
+                erro = f"id de jogador desconhecido: {player_id}"
+            elif jogador["id"] in jogadores_draftados():
+                erro = f"{jogador['nome']} ja foi draftado"
+        elif nome:
+            jogador, erro = buscar_jogador_por_nome(nome)
+        else:
+            erro = "informe 'nome' ou 'player_id'"
 
-    if erro:
-        return jsonify({"ok": False, "erro": erro}), 400
+        if erro:
+            return jsonify({"ok": False, "erro": erro}), 400
 
-    numero_pick = len(estado["picks"]) + 1
-    rodada, slot = calcular_rodada_e_slot(numero_pick)
-    time_info = TIMES_NFL.get(jogador["time"], {})
-    adp, veredito = calcular_veredito(numero_pick, jogador["id"])
-    fim_de_rodada = eh_fim_de_rodada(numero_pick)
+        numero_pick = len(estado["picks"]) + 1
+        rodada, slot = calcular_rodada_e_slot(numero_pick)
+        time_info = TIMES_NFL.get(jogador["time"], {})
+        adp, veredito = calcular_veredito(numero_pick, jogador["id"])
+        fim_de_rodada = eh_fim_de_rodada(numero_pick)
 
-    pick = {
-        "pick": numero_pick,
-        "rodada": rodada,
-        "slot": slot,
-        "player_id": jogador["id"],
-        "nome": jogador["nome"],
-        "posicao": jogador["posicao"],
-        "time_nfl": jogador["time"],
-        "cor_time": time_info.get("cor", "#333333"),
-        "adp": adp,
-        "veredito": veredito,
-        "fim_de_rodada": fim_de_rodada,
-        "comentario_rodada": None,
-        "audio_pick": None,
-        "ts": time.time(),
-    }
-    estado["picks"].append(pick)
-    salvar_estado()
+        pick = {
+            "pick": numero_pick,
+            "rodada": rodada,
+            "slot": slot,
+            "player_id": jogador["id"],
+            "nome": jogador["nome"],
+            "posicao": jogador["posicao"],
+            "time_nfl": jogador["time"],
+            "cor_time": time_info.get("cor", "#333333"),
+            "adp": adp,
+            "veredito": veredito,
+            "fim_de_rodada": fim_de_rodada,
+            "comentario_rodada": None,
+            "audio_pick": None,
+            "ts": time.time(),
+        }
+        estado["picks"].append(pick)
+        salvar_estado()
 
     narrar_pick_em_segundo_plano(numero_pick, jogador["nome"])
 
@@ -634,6 +659,14 @@ def resetar():
     estado["analise_final"] = None
     estado["gerando_analise_final"] = False
     salvar_estado()
+
+    # limpa o cache de audio tambem - e so uma garantia extra (o hash no nome
+    # do arquivo ja evita reaproveitar audio errado), mas assim a pasta nao
+    # fica acumulando arquivo de sessoes de teste antigas
+    for arquivo in AUDIO_DIR.glob("*.mp3"):
+        if arquivo.name != "boas-vindas.mp3":  # essa e estatica, nao depende do draft
+            arquivo.unlink()
+
     return jsonify({"ok": True})
 
 

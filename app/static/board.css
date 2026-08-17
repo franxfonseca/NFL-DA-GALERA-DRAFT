@@ -245,21 +245,27 @@ body {
 .revelacao-veredito.roubo { color: #ffb703; }
 .revelacao-veredito.reach { color: #e63946; }
 
-/* rodape do comentarista - so aparece quando o 1o resumo de rodada chega
-   (nao desde o pick 1) e fica fixo dali em diante, nunca "some" como a
-   revelacao em tela cheia */
+/* rodape do comentarista - some entre uma rodada e outra (da mais espaco
+   pro board), e "sobe" animado quando um comentario novo chega. Fica visivel
+   por alguns minutos e depois desce sozinho de novo (ver esconderComentarista
+   no board.js) - a altura anima (nao e so opacity) pra realocar o espaco do
+   board de verdade, nao so um efeito visual por cima */
 #comentarista {
-    display: none;
+    display: flex;
     align-items: center;
     gap: 1vw;
-    height: 30vh;
-    padding: 0.8vw 1.5vw;
+    height: 0;
+    padding: 0 1.5vw;
     background: #12161f;
-    border-top: 2px solid #2a3142;
+    border-top: 0px solid #2a3142;
+    overflow: hidden;
+    transition: height 0.6s ease, padding 0.6s ease, border-top-width 0.6s ease;
 }
 
 #comentarista.mostrar {
-    display: flex;
+    height: 20vh;
+    padding: 0.8vw 1.5vw;
+    border-top-width: 2px;
 }
 
 #comentarista img {
@@ -312,7 +318,7 @@ body {
 }
 
 .balao-texto {
-    font-size: 1.3vw;
+    font-size: 1.6vw;
     line-height: 1.4;
     overflow-y: auto;
     max-height: 100%;

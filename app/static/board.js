@@ -100,12 +100,23 @@ function registrarComentariosRodada(picks) {
     }
 }
 
+const TEMPO_COMENTARISTA_NA_TELA_MS = 2 * 60 * 1000; // 2 minutos
+let timerEsconderComentarista = null;
+
 function atualizarComentarista(rodada, texto) {
     document.getElementById("comentarista-rodada").textContent = rodada;
     document.getElementById("comentarista-texto").textContent = texto;
-    // so aparece quando o 1o comentario chega (fim da rodada 1) - antes disso
-    // fica escondido, nao faz sentido mostrar o rodape vazio desde o pick 1
+    // "sobe" na tela quando um comentario novo chega - antes disso fica
+    // escondido (altura 0), pra dar mais espaco pro board entre uma rodada
+    // e outra
     document.getElementById("comentarista").classList.add("mostrar");
+
+    // se um comentario novo chegar antes do anterior sumir, reinicia a
+    // contagem - sempre fica 2min a partir do ULTIMO comentario mostrado
+    clearTimeout(timerEsconderComentarista);
+    timerEsconderComentarista = setTimeout(() => {
+        document.getElementById("comentarista").classList.remove("mostrar");
+    }, TEMPO_COMENTARISTA_NA_TELA_MS);
 }
 
 function atualizarCabecalhos(times) {
