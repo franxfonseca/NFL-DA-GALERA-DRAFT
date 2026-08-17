@@ -319,13 +319,15 @@ body {
     object-fit: cover;
     border-radius: 16px;
     border: 6px solid var(--cor-time, #444);
+    box-shadow: 0 0 1.5vw 0 var(--cor-time, #444);
     filter: blur(28px) brightness(0.6);
-    transition: filter 0.7s ease;
+    transition: filter 0.7s ease, box-shadow 0.7s ease;
     background: #222;
 }
 
 #rev-foto.revelada {
     filter: blur(0) brightness(1);
+    box-shadow: 0 0 3.5vw 0.4vw var(--cor-time, #444);
 }
 
 .revelacao-nome {
