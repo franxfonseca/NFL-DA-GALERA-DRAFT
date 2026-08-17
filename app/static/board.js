@@ -146,7 +146,7 @@ function registrarComentariosRodada(picks) {
     }
 }
 
-const TEMPO_COMENTARISTA_NA_TELA_MS = 2 * 60 * 1000; // 2 minutos
+const TEMPO_COMENTARISTA_NA_TELA_MS = 40 * 1000; // 40 segundos
 let timerEsconderComentarista = null;
 
 function atualizarComentarista(rodada, texto) {
