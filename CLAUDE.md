@@ -42,8 +42,15 @@ regra, a feature é cortada.
 - **Frontend:** um HTML fullscreen, vanilla JS, sem build step
 - **Transporte:** Server-Sent Events (`EventSource`) — não websocket, não polling
 - **Captura:** Playwright + Chromium com perfil persistente, processo separado
-- **Voz:** `speechSynthesis` do navegador (local, instantâneo, grátis)
-- **IA:** modelo rápido para comentário por pick; modelo bom para análise final
+- **Voz:** ElevenLabs (voz "Arnold", 0.9x) — decisão consciente de trocar o
+  custo zero original por qualidade de narração. `speechSynthesis` do
+  navegador continua como fallback automático se a API falhar/demorar
+  (nunca fica em silêncio). Na narração do pick especificamente, o board
+  espera até 2s pelo áudio da ElevenLabs (a foto/anúncio já aparecem na tela
+  nesse meio tempo) antes de cair pro TTS local — decisão consciente do
+  Francisco de abrir mão de parte da latência zero da regra 5 em troca de
+  ouvir a voz boa na maioria dos picks
+- **IA:** modelo rápido (Groq) para comentário por rodada; modelo maior para análise final
 - **Dados:** JSON em disco
 
 Sem Docker, sem deploy, sem banco, sem framework de frontend.

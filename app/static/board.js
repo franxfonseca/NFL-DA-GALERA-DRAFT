@@ -14,6 +14,31 @@ let audioCtx = null;
 // (nao no servidor, porque cada dispositivo tem seu proprio conjunto de vozes)
 let vozEscolhida = null;
 
+// mutar so afeta esse navegador (o board continua gerando/recebendo audio
+// normal) - fica salvo entre recarregamentos da pagina
+let mutado = localStorage.getItem("narracaoMutada") === "1";
+let audioNarracaoAtual = null; // ultimo Audio() criado, pra poder parar na hora se mutar no meio da fala
+
+function atualizarBotaoMutar() {
+    const botao = document.getElementById("btn-mutar");
+    botao.textContent = mutado ? "🔇" : "🔊";
+    botao.title = mutado ? "Ativar narração" : "Mutar narração";
+    botao.classList.toggle("mutado", mutado);
+}
+
+document.getElementById("btn-mutar").addEventListener("click", () => {
+    mutado = !mutado;
+    localStorage.setItem("narracaoMutada", mutado ? "1" : "0");
+    atualizarBotaoMutar();
+    if (mutado) {
+        // corta na hora qualquer fala em andamento, nao so a proxima
+        speechSynthesis.cancel();
+        if (audioNarracaoAtual) audioNarracaoAtual.pause();
+    }
+});
+
+atualizarBotaoMutar();
+
 function popularVozes() {
     const select = document.getElementById("select-voz");
     const vozes = speechSynthesis.getVoices();
@@ -59,6 +84,36 @@ document.getElementById("btn-desbloquear").addEventListener("click", () => {
 const filaRevelacao = [];
 let revelando = false;
 
+// sempre a versao mais nova e completa do estado - usada pra conferir se o
+// audio_pick de um pick ja ficou pronto, sem depender do snapshot antigo
+// capturado quando o pick entrou na fila de revelacao
+let estadoMaisRecente = null;
+
+// TEMPO_ESPERA_AUDIO_PICK_MS: quanto tempo a narracao de um pick espera pelo
+// audio "bonito" da ElevenLabs antes de desistir e usar o TTS local do
+// navegador. Escolha consciente do Francisco: o show pode segurar a fala por
+// ate 2s (o resto da coreografia - foto borrada, "escolha numero X" - ja
+// esta na tela nesse meio tempo), mas nunca fica esperando pra sempre.
+const TEMPO_ESPERA_AUDIO_PICK_MS = 2000;
+const esperandoAudioPick = new Map(); // numero do pick -> resolve(url|null)
+
+function aguardarAudioPick(numeroPick) {
+    const jaPronto = estadoMaisRecente?.picks?.find((p) => p.pick === numeroPick)?.audio_pick;
+    if (jaPronto) return Promise.resolve(jaPronto);
+
+    return new Promise((resolve) => {
+        const timer = setTimeout(() => {
+            esperandoAudioPick.delete(numeroPick);
+            resolve(null);
+        }, TEMPO_ESPERA_AUDIO_PICK_MS);
+        esperandoAudioPick.set(numeroPick, (url) => {
+            clearTimeout(timer);
+            esperandoAudioPick.delete(numeroPick);
+            resolve(url);
+        });
+    });
+}
+
 // ETAPA 7: analise da IA sobre a RODADA inteira (nao por pick) - chega depois,
 // rodando em segundo plano no servidor, so no ultimo pick de cada rodada.
 const comentariosRodada = {}; // numero da rodada -> texto
@@ -70,8 +125,12 @@ function criarCardPick(pick) {
     card.style.setProperty("--cor-time", pick.cor_time);
 
     const img = document.createElement("img");
+    img.className = "foto";
     img.src = `/img/players/${pick.player_id}.png`;
     img.alt = pick.nome;
+
+    const texto = document.createElement("div");
+    texto.className = "texto";
 
     const nome = document.createElement("div");
     nome.className = "nome";
@@ -83,9 +142,21 @@ function criarCardPick(pick) {
 
     const rodada = document.createElement("div");
     rodada.className = "rodada";
-    rodada.textContent = `Rodada ${pick.rodada} - Pick ${pick.pick}`;
+    // sem "Rodada X" aqui - ja fica obvio pela posicao vertical na coluna,
+    // e o card e estreito demais pra caber o texto inteiro sem cortar
+    rodada.textContent = `Pick ${pick.pick}`;
 
-    card.append(img, nome, info, rodada);
+    texto.append(nome, info, rodada);
+
+    const logo = document.createElement("img");
+    logo.className = "logo-time";
+    logo.src = `/img/logos/${pick.time_nfl}.png`;
+    logo.alt = pick.time_nfl;
+    // sem logo baixado pra esse time - some em vez de mostrar o icone
+    // quebrado (degradacao silenciosa, regra 3 do projeto)
+    logo.onerror = () => { logo.style.display = "none"; };
+
+    card.append(img, texto, logo);
     return card;
 }
 
@@ -100,27 +171,51 @@ function registrarComentariosRodada(picks) {
     }
 }
 
+const TEMPO_COMENTARISTA_NA_TELA_MS = 40 * 1000; // 40 segundos
+let timerEsconderComentarista = null;
+
 function atualizarComentarista(rodada, texto) {
     document.getElementById("comentarista-rodada").textContent = rodada;
     document.getElementById("comentarista-texto").textContent = texto;
-    // so aparece quando o 1o comentario chega (fim da rodada 1) - antes disso
-    // fica escondido, nao faz sentido mostrar o rodape vazio desde o pick 1
+    // "sobe" na tela quando um comentario novo chega - antes disso fica
+    // escondido (altura 0), pra dar mais espaco pro board entre uma rodada
+    // e outra
     document.getElementById("comentarista").classList.add("mostrar");
+
+    // se um comentario novo chegar antes do anterior sumir, reinicia a
+    // contagem - sempre fica 2min a partir do ULTIMO comentario mostrado
+    clearTimeout(timerEsconderComentarista);
+    timerEsconderComentarista = setTimeout(() => {
+        document.getElementById("comentarista").classList.remove("mostrar");
+    }, TEMPO_COMENTARISTA_NA_TELA_MS);
 }
 
 function atualizarCabecalhos(times) {
-    document.querySelectorAll(".coluna").forEach((coluna) => {
+    // so colunas de time de verdade tem data-slot - a coluna de rodadas
+    // (a esquerda) nao tem nome-dono, entao fica de fora desse seletor
+    document.querySelectorAll(".coluna[data-slot]").forEach((coluna) => {
         const slot = coluna.dataset.slot;
         const info = times[slot] || {};
         coluna.querySelector(".nome-time").textContent = info.nome_time || `Time ${slot}`;
         coluna.querySelector(".nome-dono").textContent = info.dono || "";
+
+        // cor do cabecalho e opcional - sem escolha do operador, cai no azul
+        // vivo padrao definido no CSS (var(--azul-vivo))
+        const cabecalho = coluna.querySelector(".coluna-cabecalho");
+        if (info.cor_cabecalho) {
+            cabecalho.style.setProperty("--cor-cabecalho", info.cor_cabecalho);
+        } else {
+            cabecalho.style.removeProperty("--cor-cabecalho");
+        }
     });
 }
 
 function redesenharBoard(picks) {
     // reconstroi tudo do zero - usado na 1a carga da pagina e depois de um
-    // desfazer/reset, onde nao faz sentido rodar a coreografia de novo
-    document.querySelectorAll(".coluna-picks").forEach((coluna) => {
+    // desfazer/reset, onde nao faz sentido rodar a coreografia de novo.
+    // So limpa colunas de time (com data-slot) - a coluna de rodadas (a
+    // esquerda) tem a mesma classe .coluna-picks mas nao pode ser limpa aqui
+    document.querySelectorAll(".coluna[data-slot] .coluna-picks").forEach((coluna) => {
         coluna.innerHTML = "";
     });
     for (const pick of picks) {
@@ -145,6 +240,7 @@ function esperar(ms) {
 function falar(texto) {
     // TTS local via navegador - instantaneo, nao depende de rede.
     // Regra do projeto: falha aqui nao pode travar o show.
+    if (mutado) return;
     try {
         const utter = new SpeechSynthesisUtterance(texto);
         utter.lang = "pt-BR";
@@ -155,6 +251,21 @@ function falar(texto) {
     } catch (erro) {
         console.error("falha no TTS:", erro);
     }
+}
+
+function narrarPick(urlAudio, textoFallback) {
+    // toca o audio "bonito" da ElevenLabs (gerado em background no servidor
+    // assim que o pick foi registrado) - se ainda nao tiver pronto ou falhar
+    // ao carregar/tocar, cai pro TTS local na hora (nunca fica em silencio)
+    if (mutado) return;
+    if (!urlAudio) {
+        falar(textoFallback);
+        return;
+    }
+    const audio = new Audio(urlAudio);
+    audioNarracaoAtual = audio;
+    audio.onerror = () => falar(textoFallback);
+    audio.play().catch(() => falar(textoFallback));
 }
 
 function tocarSom(veredito) {
@@ -200,7 +311,11 @@ async function revelarPick(pick) {
     infoEl.textContent = `${pick.posicao} - ${pick.time_nfl}`;
 
     overlay.classList.add("ativa");
-    falar(`Escolha número ${pick.pick}. ${pick.nome}.`);
+    // a picagem ja aparece na tela na hora (acima), mas a NARRACAO espera
+    // ate 3s pelo audio bonito da ElevenLabs antes de cair pro TTS local -
+    // nunca fica em silencio, so pode demorar um pouco mais pra falar
+    const audioPronto = await aguardarAudioPick(pick.pick);
+    narrarPick(audioPronto, `Escolha número ${pick.pick}. ${pick.nome}.`);
 
     // 0s: anuncio + foto borrada entrando (ja aconteceu acima)
     await esperar(2000);
@@ -233,20 +348,48 @@ async function revelarPick(pick) {
     await esperar(300); // da tempo do fade out antes do proximo pick comecar
 }
 
+// da pick 24 em diante (fim da rodada 2), o reveal em tela cheia some -
+// as primeiras rodadas sao o momento de suspense, depois disso so atrasa o
+// show. O pick continua narrado e aparece no board, so sem a coreografia
+const ULTIMA_PICK_COM_REVELACAO_CHEIA = 24;
+
+async function revelarPickSimples(pick) {
+    // sem overlay: o card aparece na hora e so a narracao acontece (com a
+    // mesma espera de ate 3s pelo audio bonito da ElevenLabs)
+    adicionarCardNaColuna(pick);
+    const audioPronto = await aguardarAudioPick(pick.pick);
+    narrarPick(audioPronto, `Escolha número ${pick.pick}. ${pick.nome}.`);
+    await esperar(2000); // da tempo da fala tocar antes do proximo pick da fila
+}
+
 async function processarFila() {
     if (revelando) return;
     revelando = true;
     while (filaRevelacao.length) {
         const pick = filaRevelacao.shift();
-        await revelarPick(pick);
-        adicionarCardNaColuna(pick);
+        if (pick.pick <= ULTIMA_PICK_COM_REVELACAO_CHEIA) {
+            await revelarPick(pick);
+            adicionarCardNaColuna(pick);
+        } else {
+            await revelarPickSimples(pick);
+        }
     }
     revelando = false;
 }
 
 function processarEstado(estado) {
+    estadoMaisRecente = estado;
     atualizarCabecalhos(estado.times || {});
     registrarComentariosRodada(estado.picks);
+
+    // resolve esperas pendentes de audio_pick (ver aguardarAudioPick) - o
+    // audio pode ter ficado pronto na ElevenLabs enquanto o board esperava
+    // pra narrar um pick que estava na fila de revelacao
+    for (const pick of estado.picks) {
+        if (pick.audio_pick && esperandoAudioPick.has(pick.pick)) {
+            esperandoAudioPick.get(pick.pick)(pick.audio_pick);
+        }
+    }
 
     if (picksConhecidos === null) {
         // 1a carga da pagina - mostra o que ja existe direto, sem coreografia

@@ -4,11 +4,27 @@
     padding: 0;
 }
 
+/* tema claro - cinza claro + azul vivo tipo NFL, pra fugir da cara escura
+   estilo Sleeper que o board tinha antes */
+:root {
+    --cinza-fundo: #eef1f6;
+    --cinza-grade: #d7dee7;
+    --cinza-coluna: #f4f6fa;
+    --branco-painel: #ffffff;
+    --cinza-borda: #dbe1e9;
+    --texto-principal: #17202e;
+    --texto-suave: #5b6577;
+    --texto-fraco: #94a0b3;
+    --azul-nfl: #013369;
+    --azul-vivo: #1456d6;
+    --azul-vivo-escuro: #0d3fae;
+}
+
 html, body {
     width: 100%;
     height: 100%;
-    background: #0b0e14;
-    color: #f2f2f2;
+    background: var(--cinza-fundo);
+    color: var(--texto-principal);
     font-family: "Segoe UI", Arial, sans-serif;
     overflow: hidden;
 }
@@ -18,87 +34,238 @@ body {
     flex-direction: column;
 }
 
+/* colunas largas + 15 rodadas nao cabem na tela de uma vez - #board vira o
+   proprio container de rolagem (nos dois eixos). Cabecalho dos times fica
+   fixo no topo e a coluna de rodadas fica fixa na esquerda via
+   position:sticky, entao o operador nunca perde a referencia de quem e
+   quem enquanto rola pra ver o resto do board */
 #board {
+    --altura-card: 4.6vw;
     display: grid;
-    grid-template-columns: repeat(12, 1fr);
+    grid-template-columns: 58px repeat(12, 234px); /* rodadas +5% (era 55px), times -10% */
+    align-items: start; /* colunas nao esticam pra altura toda - cada uma cresce so o tanto que precisa */
     width: 100vw;
     flex: 1;
     min-height: 0;
     gap: 2px;
-    background: #000;
+    background: var(--cinza-grade);
+    overflow: auto;
+}
+
+#board::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+}
+
+#board::-webkit-scrollbar-track {
+    background: var(--cinza-coluna);
+}
+
+#board::-webkit-scrollbar-thumb {
+    background: var(--cinza-borda);
+    border-radius: 7px;
+    border: 3px solid var(--cinza-coluna);
+}
+
+#board::-webkit-scrollbar-thumb:hover {
+    background: #c7cfda;
+}
+
+#board::-webkit-scrollbar-corner {
+    background: var(--cinza-coluna);
 }
 
 .coluna {
     display: flex;
     flex-direction: column;
-    background: #12161f;
-    overflow: hidden;
+    background: var(--cinza-coluna);
 }
 
+/* z-index alto no CONTAINER (nao so no cabecalho filho) - .coluna-rodadas
+   e sticky, entao cria seu proprio contexto de empilhamento: um z-index
+   maior so no filho nao adianta nada se o pai perde a comparacao la fora
+   contra os cabecalhos sticky dos times (que tambem sao sticky, z-index 10) */
+.coluna-rodadas {
+    position: sticky;
+    left: 0;
+    z-index: 20;
+}
+
+.coluna-rodadas .nome-time {
+    font-size: 0.46vw; /* coluna ficou mais estreita ainda - "RODADAS" precisa de fonte menor */
+    white-space: nowrap;
+}
+
+/* celula "RODADAS" (canto fixo) em cinza claro - mesmo tom cinza usado no
+   resto do board (RD 1-16), diferente da cor dos cabecalhos de time, pra
+   marcar que essa coluna e navegacao, nao time */
+.coluna-rodadas .coluna-cabecalho {
+    background: var(--cinza-borda);
+    border-bottom-color: #c7cfda;
+}
+
+.coluna-rodadas .nome-time {
+    color: var(--texto-principal);
+}
+
+/* botao de mutar a narracao - fica no canto fixo, sempre visivel, no
+   espaco logo abaixo de "RODADAS" que antes ficava vazio */
+#btn-mutar {
+    margin-top: 2px;
+    background: transparent;
+    border: none;
+    color: var(--texto-principal);
+    font-size: 0.85vw;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.85;
+}
+
+#btn-mutar:hover {
+    opacity: 1;
+}
+
+#btn-mutar.mutado {
+    opacity: 0.55;
+}
+
+/* altura fixa (nao so o tanto que o texto ocupa) - sem isso, o cabecalho
+   menor da coluna RODADAS (uma linha, "RODADAS") ficava mais baixo que o
+   cabecalho dos times (duas linhas, nome + dono), e a primeira linha de
+   picks desalinhava da linha "RD 1". Altura 30% menor que o original */
 .coluna-cabecalho {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    height: 2.56vw;
+    min-height: 41px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     text-align: center;
-    padding: 0.5vw 0.3vw;
-    background: #1b2130;
-    border-bottom: 2px solid #2a3142;
+    padding: 0.3vw;
+    background: var(--cor-cabecalho, var(--azul-vivo));
+    border-bottom: 2px solid rgba(0, 0, 0, 0.18);
+    border-radius: 0;
 }
 
 .nome-time {
     font-size: 1.05vw;
     font-weight: bold;
     letter-spacing: 0.03em;
+    color: #ffffff;
 }
 
 .nome-dono {
     font-size: 0.75vw;
-    color: #a0a8bd;
+    color: #cddaf5;
     margin-top: 2px;
 }
 
 .coluna-picks {
-    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 4px;
-    overflow-y: auto;
+    /* padding de cima pela metade (2px) - o espaco entre o cabecalho colorido
+       e o 1o card mostrava o cinza bem claro da coluna, que lia como uma
+       "linha branca" por baixo dos nomes dos times */
+    padding: 2px 4px 4px 4px;
 }
 
+/* card padronizado: foto pequena a esquerda, texto a direita - tamanho fixo
+   independente do tanto de texto (nome longo trunca com reticencias em vez
+   de esticar o card). Altura vem de --altura-card (definida em #board) pra
+   ficar sempre igual a .rodada-label e as linhas alinharem entre as colunas */
+/* sem caixa branca por card - o board fica todo no cinza da coluna, e a
+   unica linha demarcando cada rodada e essa borda branca embaixo do card
+   (ver .rodada-label pra mesma linha na coluna de rodadas, alinhando a
+   "linha" pra parecer continua por toda a tabela) */
 .pick-card {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    background: #1b2130;
+    gap: 0.5vw;
+    background: transparent;
     border-left: 4px solid var(--cor-time, #444);
-    border-radius: 4px;
-    padding: 6px 4px;
+    border-bottom: 2px solid #ffffff;
+    padding: 0.3vw 0.5vw;
+    height: var(--altura-card);
+    min-height: 56px;
+    overflow: hidden;
     animation: entrada 0.4s ease-out;
 }
 
-.pick-card img {
-    width: 100%;
+.pick-card .foto {
+    width: 3.5vw;
+    height: 3.5vw;
+    min-width: 45px;
+    min-height: 45px;
     aspect-ratio: 1 / 1;
     object-fit: cover;
     border-radius: 4px;
-    background: #333;
+    background: var(--cinza-borda);
+    flex-shrink: 0;
+}
+
+.pick-card .texto {
+    min-width: 0; /* deixa o texto truncar em vez de espremer o card */
+    flex: 1;
+}
+
+/* escudo do time no espaco vazio a direita do card - opacidade reduzida
+   pra nao competir com o nome/posicao, some sozinho se o logo desse time
+   nao tiver sido baixado (ver onerror em criarCardPick) */
+.pick-card .logo-time {
+    width: 2.4vw;
+    height: 2.4vw;
+    min-width: 30px;
+    min-height: 30px;
+    object-fit: contain;
+    flex-shrink: 0;
+    opacity: 0.85;
 }
 
 .pick-card .nome {
-    font-size: 0.85vw;
+    font-size: 0.8vw;
     font-weight: 600;
-    text-align: center;
-    margin-top: 4px;
-    line-height: 1.1;
+    line-height: 1.2;
+    color: var(--texto-principal);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .pick-card .info {
-    font-size: 0.7vw;
-    color: #a0a8bd;
-    text-align: center;
+    font-size: 0.65vw;
+    color: var(--texto-suave);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .pick-card .rodada {
-    font-size: 0.65vw;
-    color: #6b7385;
+    font-size: 0.58vw;
+    color: var(--texto-fraco);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* coluna de rodadas em cinza (a linha 1/cabecalho e que fica no azul vivo
+   de destaque) - fica sempre visivel enquanto rola (sticky left em
+   .coluna-rodadas) */
+.rodada-label {
+    height: var(--altura-card);
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--cinza-borda);
+    border-bottom: 2px solid #ffffff; /* mesma linha branca dos pick-cards, pra ficar continua na tabela toda */
+    color: var(--texto-principal);
+    font-size: 0.85vw;
+    font-weight: 700;
+    letter-spacing: 0.03em;
 }
 
 @keyframes entrada {
@@ -113,7 +280,7 @@ body {
 #desbloquear {
     position: fixed;
     inset: 0;
-    background: #0b0e14;
+    background: var(--cinza-fundo);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -133,16 +300,16 @@ body {
 
 .desbloquear-caixa label {
     font-size: 1vw;
-    color: #a0a8bd;
+    color: var(--texto-suave);
 }
 
 #select-voz {
     font-size: 1.2vw;
     padding: 0.5vw 1vw;
     border-radius: 6px;
-    border: 2px solid #2a3142;
-    background: #1b2130;
-    color: #fff;
+    border: 2px solid var(--cinza-borda);
+    background: var(--branco-painel);
+    color: var(--texto-principal);
 }
 
 #btn-desbloquear {
@@ -158,6 +325,8 @@ body {
 }
 
 /* ---- coreografia de revelacao (etapa 4) ---- */
+/* fica escura de proposito, mesmo com o resto do board claro - e o momento
+   de holofote/suspense, o contraste com o board claro por tras reforca o efeito */
 
 #revelacao {
     position: fixed;
@@ -193,18 +362,22 @@ body {
     object-fit: cover;
     border-radius: 16px;
     border: 6px solid var(--cor-time, #444);
+    box-shadow: 0 0 1.5vw 0 var(--cor-time, #444);
     filter: blur(28px) brightness(0.6);
-    transition: filter 0.7s ease;
+    transition: filter 0.7s ease, box-shadow 0.7s ease;
     background: #222;
 }
 
 #rev-foto.revelada {
     filter: blur(0) brightness(1);
+    box-shadow: 0 0 3.5vw 0.4vw var(--cor-time, #444);
 }
 
 .revelacao-nome {
     font-size: 4vw;
     font-weight: 900;
+    color: #ffffff; /* o board de fundo agora e claro, mas essa caixa continua escura -
+                        sem cor explicita aqui, herdava o texto escuro do body e sumia */
     margin-top: 1vw;
     opacity: 0;
     transform: scale(0.7);
@@ -245,21 +418,28 @@ body {
 .revelacao-veredito.roubo { color: #ffb703; }
 .revelacao-veredito.reach { color: #e63946; }
 
-/* rodape do comentarista - so aparece quando o 1o resumo de rodada chega
-   (nao desde o pick 1) e fica fixo dali em diante, nunca "some" como a
-   revelacao em tela cheia */
+/* rodape do comentarista - some entre uma rodada e outra (da mais espaco
+   pro board), e "sobe" animado quando um comentario novo chega. Fica visivel
+   por alguns segundos e depois desce sozinho de novo (ver
+   TEMPO_COMENTARISTA_NA_TELA_MS no board.js) - a altura anima (nao e so
+   opacity) pra realocar o espaco do board de verdade, nao so um efeito
+   visual por cima */
 #comentarista {
-    display: none;
+    display: flex;
     align-items: center;
     gap: 1vw;
-    height: 30vh;
-    padding: 0.8vw 1.5vw;
-    background: #12161f;
-    border-top: 2px solid #2a3142;
+    height: 0;
+    padding: 0 1.5vw;
+    background: var(--cinza-coluna);
+    border-top: 0px solid var(--cinza-borda);
+    overflow: hidden;
+    transition: height 0.6s ease, padding 0.6s ease, border-top-width 0.6s ease;
 }
 
 #comentarista.mostrar {
-    display: flex;
+    height: 20vh;
+    padding: 0.8vw 1.5vw;
+    border-top-width: 2px;
 }
 
 #comentarista img {
@@ -267,14 +447,14 @@ body {
     aspect-ratio: 1 / 1;
     object-fit: cover;
     border-radius: 50%;
-    border: 3px solid #d8c98a;
+    border: 3px solid var(--azul-vivo);
     flex-shrink: 0;
 }
 
 .balao {
     position: relative;
-    background: #1b2130;
-    border: 2px solid #2a3142;
+    background: var(--branco-painel);
+    border: 2px solid var(--cinza-borda);
     border-radius: 12px;
     padding: 0.6vw 1.2vw;
     flex: 1;
@@ -291,7 +471,7 @@ body {
     top: 50%;
     transform: translateY(-50%);
     border: 10px solid transparent;
-    border-right-color: #2a3142;
+    border-right-color: var(--cinza-borda);
 }
 
 .balao::after {
@@ -301,19 +481,20 @@ body {
     top: 50%;
     transform: translateY(-50%);
     border: 8px solid transparent;
-    border-right-color: #1b2130;
+    border-right-color: var(--branco-painel);
 }
 
 .balao-titulo {
     font-size: 0.8vw;
-    color: #a0a8bd;
+    color: var(--texto-suave);
     letter-spacing: 0.05em;
     margin-bottom: 0.2vw;
 }
 
 .balao-texto {
-    font-size: 1.3vw;
+    font-size: 1.6vw;
     line-height: 1.4;
+    color: var(--texto-principal);
     overflow-y: auto;
     max-height: 100%;
 }

@@ -109,6 +109,12 @@
         background: #1b2130;
         color: #fff;
     }
+    .linha-time .campo-cor {
+        width: 40px;
+        flex-shrink: 0;
+        padding: 2px;
+        cursor: pointer;
+    }
 </style>
 </head>
 <body>
@@ -139,6 +145,7 @@
             <span>{{ slot }}</span>
             <input type="text" class="campo-nome-time" placeholder="Nome do time">
             <input type="text" class="campo-dono" placeholder="Nome do dono">
+            <input type="color" class="campo-cor" title="Cor do cabecalho no board" value="#1456d6">
         </div>
         {% endfor %}
     </details>
@@ -296,6 +303,7 @@
                 const info = times[linha.dataset.slot] || {};
                 linha.querySelector(".campo-nome-time").value = info.nome_time || "";
                 linha.querySelector(".campo-dono").value = info.dono || "";
+                linha.querySelector(".campo-cor").value = info.cor_cabecalho || "#1456d6";
             });
         }
 
@@ -307,12 +315,16 @@
                     slot: Number(linha.dataset.slot),
                     nome_time: linha.querySelector(".campo-nome-time").value,
                     dono: linha.querySelector(".campo-dono").value,
+                    cor_cabecalho: linha.querySelector(".campo-cor").value,
                 }),
             });
         }
 
         document.querySelectorAll(".linha-time input").forEach((campo) => {
             campo.addEventListener("blur", () => salvarNomeTime(campo.closest(".linha-time")));
+            // o seletor de cor e um dialogo nativo do SO - "blur" as vezes nao
+            // dispara direito ao fechar, entao salva tambem no "change"
+            campo.addEventListener("change", () => salvarNomeTime(campo.closest(".linha-time")));
         });
 
         carregarNomesTimes();
