@@ -59,6 +59,36 @@ document.getElementById("btn-desbloquear").addEventListener("click", () => {
 const filaRevelacao = [];
 let revelando = false;
 
+// sempre a versao mais nova e completa do estado - usada pra conferir se o
+// audio_pick de um pick ja ficou pronto, sem depender do snapshot antigo
+// capturado quando o pick entrou na fila de revelacao
+let estadoMaisRecente = null;
+
+// TEMPO_ESPERA_AUDIO_PICK_MS: quanto tempo a narracao de um pick espera pelo
+// audio "bonito" da ElevenLabs antes de desistir e usar o TTS local do
+// navegador. Escolha consciente do Francisco: o show pode segurar a fala por
+// ate 3s (o resto da coreografia - foto borrada, "escolha numero X" - ja
+// esta na tela nesse meio tempo), mas nunca fica esperando pra sempre.
+const TEMPO_ESPERA_AUDIO_PICK_MS = 3000;
+const esperandoAudioPick = new Map(); // numero do pick -> resolve(url|null)
+
+function aguardarAudioPick(numeroPick) {
+    const jaPronto = estadoMaisRecente?.picks?.find((p) => p.pick === numeroPick)?.audio_pick;
+    if (jaPronto) return Promise.resolve(jaPronto);
+
+    return new Promise((resolve) => {
+        const timer = setTimeout(() => {
+            esperandoAudioPick.delete(numeroPick);
+            resolve(null);
+        }, TEMPO_ESPERA_AUDIO_PICK_MS);
+        esperandoAudioPick.set(numeroPick, (url) => {
+            clearTimeout(timer);
+            esperandoAudioPick.delete(numeroPick);
+            resolve(url);
+        });
+    });
+}
+
 // ETAPA 7: analise da IA sobre a RODADA inteira (nao por pick) - chega depois,
 // rodando em segundo plano no servidor, so no ultimo pick de cada rodada.
 const comentariosRodada = {}; // numero da rodada -> texto
@@ -224,10 +254,11 @@ async function revelarPick(pick) {
     infoEl.textContent = `${pick.posicao} - ${pick.time_nfl}`;
 
     overlay.classList.add("ativa");
-    // regra do projeto: narracao dispara IMEDIATAMENTE, sem esperar rede -
-    // se o audio ElevenLabs desse pick ja estiver pronto (raro, a geracao
-    // leva 1-2s), usa ele; senao cai pro TTS local na hora, sem atraso
-    narrarPick(pick.audio_pick, `Escolha número ${pick.pick}. ${pick.nome}.`);
+    // a picagem ja aparece na tela na hora (acima), mas a NARRACAO espera
+    // ate 3s pelo audio bonito da ElevenLabs antes de cair pro TTS local -
+    // nunca fica em silencio, so pode demorar um pouco mais pra falar
+    const audioPronto = await aguardarAudioPick(pick.pick);
+    narrarPick(audioPronto, `Escolha número ${pick.pick}. ${pick.nome}.`);
 
     // 0s: anuncio + foto borrada entrando (ja aconteceu acima)
     await esperar(2000);
@@ -272,8 +303,18 @@ async function processarFila() {
 }
 
 function processarEstado(estado) {
+    estadoMaisRecente = estado;
     atualizarCabecalhos(estado.times || {});
     registrarComentariosRodada(estado.picks);
+
+    // resolve esperas pendentes de audio_pick (ver aguardarAudioPick) - o
+    // audio pode ter ficado pronto na ElevenLabs enquanto o board esperava
+    // pra narrar um pick que estava na fila de revelacao
+    for (const pick of estado.picks) {
+        if (pick.audio_pick && esperandoAudioPick.has(pick.pick)) {
+            esperandoAudioPick.get(pick.pick)(pick.audio_pick);
+        }
+    }
 
     if (picksConhecidos === null) {
         // 1a carga da pagina - mostra o que ja existe direto, sem coreografia

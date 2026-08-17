@@ -45,8 +45,11 @@ regra, a feature é cortada.
 - **Voz:** ElevenLabs (voz "Arnold", 0.9x) — decisão consciente de trocar o
   custo zero original por qualidade de narração. `speechSynthesis` do
   navegador continua como fallback automático se a API falhar/demorar
-  (nunca fica em silêncio) e é o que narra o pick quando o áudio bonito não
-  fica pronto a tempo (regra 5 não abre mão de latência zero na narração do pick)
+  (nunca fica em silêncio). Na narração do pick especificamente, o board
+  espera até 3s pelo áudio da ElevenLabs (a foto/anúncio já aparecem na tela
+  nesse meio tempo) antes de cair pro TTS local — decisão consciente do
+  Francisco de abrir mão de parte da latência zero da regra 5 em troca de
+  ouvir a voz boa na maioria dos picks
 - **IA:** modelo rápido (Groq) para comentário por rodada; modelo maior para análise final
 - **Dados:** JSON em disco
 
