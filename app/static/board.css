@@ -62,13 +62,13 @@ body {
 }
 
 #board::-webkit-scrollbar-thumb {
-    background: var(--azul-vivo);
+    background: var(--cinza-borda);
     border-radius: 7px;
     border: 3px solid var(--cinza-coluna);
 }
 
 #board::-webkit-scrollbar-thumb:hover {
-    background: var(--azul-vivo-escuro);
+    background: #c7cfda;
 }
 
 #board::-webkit-scrollbar-corner {
