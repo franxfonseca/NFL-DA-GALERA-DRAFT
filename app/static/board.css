@@ -184,7 +184,7 @@ body {
     gap: 0.5vw;
     background: transparent;
     border-left: 4px solid var(--cor-time, #444);
-    border-bottom: 2px solid #ffffff;
+    border-bottom: 0.67px solid #ffffff;
     padding: 0.3vw 0.5vw;
     height: var(--altura-card);
     min-height: 56px;
@@ -258,7 +258,7 @@ body {
     align-items: center;
     justify-content: center;
     background: var(--cinza-borda);
-    border-bottom: 2px solid #ffffff; /* mesma linha branca dos pick-cards, pra ficar continua na tabela toda */
+    border-bottom: 0.67px solid #ffffff; /* mesma linha branca dos pick-cards, pra ficar continua na tabela toda */
     color: var(--texto-principal);
     font-size: 0.85vw;
     font-weight: 700;
