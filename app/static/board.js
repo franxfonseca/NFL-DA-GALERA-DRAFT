@@ -311,13 +311,31 @@ async function revelarPick(pick) {
     await esperar(300); // da tempo do fade out antes do proximo pick comecar
 }
 
+// da pick 24 em diante (fim da rodada 2), o reveal em tela cheia some -
+// as primeiras rodadas sao o momento de suspense, depois disso so atrasa o
+// show. O pick continua narrado e aparece no board, so sem a coreografia
+const ULTIMA_PICK_COM_REVELACAO_CHEIA = 24;
+
+async function revelarPickSimples(pick) {
+    // sem overlay: o card aparece na hora e so a narracao acontece (com a
+    // mesma espera de ate 3s pelo audio bonito da ElevenLabs)
+    adicionarCardNaColuna(pick);
+    const audioPronto = await aguardarAudioPick(pick.pick);
+    narrarPick(audioPronto, `Escolha número ${pick.pick}. ${pick.nome}.`);
+    await esperar(2000); // da tempo da fala tocar antes do proximo pick da fila
+}
+
 async function processarFila() {
     if (revelando) return;
     revelando = true;
     while (filaRevelacao.length) {
         const pick = filaRevelacao.shift();
-        await revelarPick(pick);
-        adicionarCardNaColuna(pick);
+        if (pick.pick <= ULTIMA_PICK_COM_REVELACAO_CHEIA) {
+            await revelarPick(pick);
+            adicionarCardNaColuna(pick);
+        } else {
+            await revelarPickSimples(pick);
+        }
     }
     revelando = false;
 }

@@ -26,7 +26,7 @@ body {
 #board {
     --altura-card: 4.6vw;
     display: grid;
-    grid-template-columns: 78px repeat(12, 260px);
+    grid-template-columns: 55px repeat(12, 234px); /* rodadas -30%, times -10% */
     align-items: start; /* colunas nao esticam pra altura toda - cada uma cresce so o tanto que precisa */
     width: 100vw;
     flex: 1;
@@ -76,25 +76,25 @@ body {
 }
 
 .coluna-rodadas .nome-time {
-    font-size: 0.72vw; /* coluna estreita - "RODADAS" nao cabe no tamanho padrao */
+    font-size: 0.6vw; /* coluna ficou mais estreita ainda - "RODADAS" precisa de fonte menor */
     white-space: nowrap;
 }
 
 /* altura fixa (nao so o tanto que o texto ocupa) - sem isso, o cabecalho
    menor da coluna RODADAS (uma linha, "RODADAS") ficava mais baixo que o
    cabecalho dos times (duas linhas, nome + dono), e a primeira linha de
-   picks desalinhava da linha "RD 1" */
+   picks desalinhava da linha "RD 1". Altura 30% menor que o original */
 .coluna-cabecalho {
     position: sticky;
     top: 0;
     z-index: 10;
-    height: 3.65vw;
-    min-height: 58px;
+    height: 2.56vw;
+    min-height: 41px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     text-align: center;
-    padding: 0.5vw 0.3vw;
+    padding: 0.3vw;
     background: #1b2130;
     border-bottom: 2px solid #2a3142;
 }
