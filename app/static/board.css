@@ -96,6 +96,13 @@ body {
     white-space: nowrap;
 }
 
+/* celula "RODADAS" (canto fixo) em cinza escuro - diferente do azul vivo
+   dos cabecalhos de time, pra marcar que essa coluna e navegacao, nao time */
+.coluna-rodadas .coluna-cabecalho {
+    background: #3a4451;
+    border-bottom-color: rgba(0, 0, 0, 0.3);
+}
+
 /* botao de mutar a narracao - fica no canto fixo, sempre visivel, no
    espaco logo abaixo de "RODADAS" que antes ficava vazio */
 #btn-mutar {
