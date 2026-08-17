@@ -4,11 +4,27 @@
     padding: 0;
 }
 
+/* tema claro - cinza claro + azul vivo tipo NFL, pra fugir da cara escura
+   estilo Sleeper que o board tinha antes */
+:root {
+    --cinza-fundo: #eef1f6;
+    --cinza-grade: #d7dee7;
+    --cinza-coluna: #f4f6fa;
+    --branco-painel: #ffffff;
+    --cinza-borda: #dbe1e9;
+    --texto-principal: #17202e;
+    --texto-suave: #5b6577;
+    --texto-fraco: #94a0b3;
+    --azul-nfl: #013369;
+    --azul-vivo: #1456d6;
+    --azul-vivo-escuro: #0d3fae;
+}
+
 html, body {
     width: 100%;
     height: 100%;
-    background: #0b0e14;
-    color: #f2f2f2;
+    background: var(--cinza-fundo);
+    color: var(--texto-principal);
     font-family: "Segoe UI", Arial, sans-serif;
     overflow: hidden;
 }
@@ -32,7 +48,7 @@ body {
     flex: 1;
     min-height: 0;
     gap: 2px;
-    background: #000;
+    background: var(--cinza-grade);
     overflow: auto;
 }
 
@@ -42,27 +58,27 @@ body {
 }
 
 #board::-webkit-scrollbar-track {
-    background: #12161f;
+    background: var(--cinza-coluna);
 }
 
 #board::-webkit-scrollbar-thumb {
-    background: #444d63;
+    background: var(--azul-vivo);
     border-radius: 7px;
-    border: 3px solid #12161f;
+    border: 3px solid var(--cinza-coluna);
 }
 
 #board::-webkit-scrollbar-thumb:hover {
-    background: #d8c98a;
+    background: var(--azul-vivo-escuro);
 }
 
 #board::-webkit-scrollbar-corner {
-    background: #12161f;
+    background: var(--cinza-coluna);
 }
 
 .coluna {
     display: flex;
     flex-direction: column;
-    background: #12161f;
+    background: var(--cinza-coluna);
 }
 
 /* z-index alto no CONTAINER (nao so no cabecalho filho) - .coluna-rodadas
@@ -95,19 +111,20 @@ body {
     justify-content: center;
     text-align: center;
     padding: 0.3vw;
-    background: #1b2130;
-    border-bottom: 2px solid #2a3142;
+    background: var(--azul-nfl);
+    border-bottom: 2px solid var(--azul-vivo-escuro);
 }
 
 .nome-time {
     font-size: 1.05vw;
     font-weight: bold;
     letter-spacing: 0.03em;
+    color: #ffffff;
 }
 
 .nome-dono {
     font-size: 0.75vw;
-    color: #a0a8bd;
+    color: #b7c9ea;
     margin-top: 2px;
 }
 
@@ -127,7 +144,8 @@ body {
     flex-direction: row;
     align-items: center;
     gap: 0.5vw;
-    background: #1b2130;
+    background: var(--branco-painel);
+    border: 1px solid var(--cinza-borda);
     border-left: 4px solid var(--cor-time, #444);
     border-radius: 4px;
     padding: 0.3vw 0.5vw;
@@ -145,7 +163,7 @@ body {
     aspect-ratio: 1 / 1;
     object-fit: cover;
     border-radius: 4px;
-    background: #333;
+    background: var(--cinza-borda);
     flex-shrink: 0;
 }
 
@@ -171,6 +189,7 @@ body {
     font-size: 0.8vw;
     font-weight: 600;
     line-height: 1.2;
+    color: var(--texto-principal);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -178,7 +197,7 @@ body {
 
 .pick-card .info {
     font-size: 0.65vw;
-    color: #a0a8bd;
+    color: var(--texto-suave);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -186,7 +205,7 @@ body {
 
 .pick-card .rodada {
     font-size: 0.58vw;
-    color: #6b7385;
+    color: var(--texto-fraco);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -198,9 +217,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #1b2130;
+    background: #e3ecfb;
     border-radius: 4px;
-    color: #a0a8bd;
+    color: var(--azul-nfl);
     font-size: 0.85vw;
     font-weight: 700;
     letter-spacing: 0.03em;
@@ -218,7 +237,7 @@ body {
 #desbloquear {
     position: fixed;
     inset: 0;
-    background: #0b0e14;
+    background: var(--cinza-fundo);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -238,16 +257,16 @@ body {
 
 .desbloquear-caixa label {
     font-size: 1vw;
-    color: #a0a8bd;
+    color: var(--texto-suave);
 }
 
 #select-voz {
     font-size: 1.2vw;
     padding: 0.5vw 1vw;
     border-radius: 6px;
-    border: 2px solid #2a3142;
-    background: #1b2130;
-    color: #fff;
+    border: 2px solid var(--cinza-borda);
+    background: var(--branco-painel);
+    color: var(--texto-principal);
 }
 
 #btn-desbloquear {
@@ -263,6 +282,8 @@ body {
 }
 
 /* ---- coreografia de revelacao (etapa 4) ---- */
+/* fica escura de proposito, mesmo com o resto do board claro - e o momento
+   de holofote/suspense, o contraste com o board claro por tras reforca o efeito */
 
 #revelacao {
     position: fixed;
@@ -310,6 +331,8 @@ body {
 .revelacao-nome {
     font-size: 4vw;
     font-weight: 900;
+    color: #ffffff; /* o board de fundo agora e claro, mas essa caixa continua escura -
+                        sem cor explicita aqui, herdava o texto escuro do body e sumia */
     margin-top: 1vw;
     opacity: 0;
     transform: scale(0.7);
@@ -352,17 +375,18 @@ body {
 
 /* rodape do comentarista - some entre uma rodada e outra (da mais espaco
    pro board), e "sobe" animado quando um comentario novo chega. Fica visivel
-   por alguns minutos e depois desce sozinho de novo (ver esconderComentarista
-   no board.js) - a altura anima (nao e so opacity) pra realocar o espaco do
-   board de verdade, nao so um efeito visual por cima */
+   por alguns segundos e depois desce sozinho de novo (ver
+   TEMPO_COMENTARISTA_NA_TELA_MS no board.js) - a altura anima (nao e so
+   opacity) pra realocar o espaco do board de verdade, nao so um efeito
+   visual por cima */
 #comentarista {
     display: flex;
     align-items: center;
     gap: 1vw;
     height: 0;
     padding: 0 1.5vw;
-    background: #12161f;
-    border-top: 0px solid #2a3142;
+    background: var(--cinza-coluna);
+    border-top: 0px solid var(--cinza-borda);
     overflow: hidden;
     transition: height 0.6s ease, padding 0.6s ease, border-top-width 0.6s ease;
 }
@@ -378,14 +402,14 @@ body {
     aspect-ratio: 1 / 1;
     object-fit: cover;
     border-radius: 50%;
-    border: 3px solid #d8c98a;
+    border: 3px solid var(--azul-vivo);
     flex-shrink: 0;
 }
 
 .balao {
     position: relative;
-    background: #1b2130;
-    border: 2px solid #2a3142;
+    background: var(--branco-painel);
+    border: 2px solid var(--cinza-borda);
     border-radius: 12px;
     padding: 0.6vw 1.2vw;
     flex: 1;
@@ -402,7 +426,7 @@ body {
     top: 50%;
     transform: translateY(-50%);
     border: 10px solid transparent;
-    border-right-color: #2a3142;
+    border-right-color: var(--cinza-borda);
 }
 
 .balao::after {
@@ -412,12 +436,12 @@ body {
     top: 50%;
     transform: translateY(-50%);
     border: 8px solid transparent;
-    border-right-color: #1b2130;
+    border-right-color: var(--branco-painel);
 }
 
 .balao-titulo {
     font-size: 0.8vw;
-    color: #a0a8bd;
+    color: var(--texto-suave);
     letter-spacing: 0.05em;
     margin-bottom: 0.2vw;
 }
@@ -425,6 +449,7 @@ body {
 .balao-texto {
     font-size: 1.6vw;
     line-height: 1.4;
+    color: var(--texto-principal);
     overflow-y: auto;
     max-height: 100%;
 }
