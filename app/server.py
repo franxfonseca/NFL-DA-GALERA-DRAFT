@@ -237,6 +237,37 @@ def chamar_groq(prompt: str, modelo: str, max_tokens: int, temperatura: float = 
         return None
 
 
+def selecionar_destaques_rodada(picks_da_rodada: list[dict], quantidade: int = 3) -> list[dict]:
+    """Sempre devolve um numero fixo de jogadores pra IA comentar (nao deixa a
+    escolha solta pro modelo) - prioridade pros reach/roubo da rodada (o que
+    realmente rende comentario), completando com outros jogadores da rodada
+    ate a quantidade pedida. Na hora de completar, prefere posicoes ainda nao
+    representadas entre os ja escolhidos, pra variar em vez de repetir posicao."""
+    escolhidos = [p for p in picks_da_rodada if p["veredito"] in ("reach", "roubo")][:quantidade]
+
+    if len(escolhidos) < quantidade:
+        ja_escolhidos = {p["pick"] for p in escolhidos}
+        posicoes_usadas = {p["posicao"] for p in escolhidos}
+        restantes = [p for p in picks_da_rodada if p["pick"] not in ja_escolhidos]
+
+        for p in restantes:
+            if len(escolhidos) >= quantidade:
+                break
+            if p["posicao"] not in posicoes_usadas:
+                escolhidos.append(p)
+                posicoes_usadas.add(p["posicao"])
+
+        if len(escolhidos) < quantidade:
+            ja_escolhidos = {p["pick"] for p in escolhidos}
+            for p in restantes:
+                if len(escolhidos) >= quantidade:
+                    break
+                if p["pick"] not in ja_escolhidos:
+                    escolhidos.append(p)
+
+    return escolhidos[:quantidade]
+
+
 def gerar_comentario_rodada(rodada: int) -> str | None:
     """Chama o Groq (gratis, rapido) pra uma analise curta da RODADA inteira,
     no estilo do Tom Brady: foco principal nas QUALIDADES dos jogadores
@@ -255,20 +286,16 @@ def gerar_comentario_rodada(rodada: int) -> str | None:
 
     lista_picks = "\n".join(linha(p) for p in picks_da_rodada)
 
-    reaches = [p for p in picks_da_rodada if p["veredito"] == "reach"]
-    roubos = [p for p in picks_da_rodada if p["veredito"] == "roubo"]
+    selecionados = selecionar_destaques_rodada(picks_da_rodada)
 
-    def nomeia(ps):
-        return ", ".join(f"{p['nome']} (pick {p['pick']}, ADP {p['adp']:.1f})" for p in ps)
+    def descreve_selecionado(p):
+        veredito_txt = {
+            "roubo": "ROUBO - saiu bem depois do ADP esperado",
+            "reach": "REACH - escolhido bem antes do ADP esperado",
+        }.get(p["veredito"], "dentro do esperado")
+        return f"- {p['nome']} (pick {p['pick']}, {p['posicao']} - {p['time_nfl']}): {veredito_txt}"
 
-    if reaches or roubos:
-        destaques = "DESTAQUES QUE VOCE PRECISA CITAR NO COMENTARIO:\n"
-        if reaches:
-            destaques += f"- REACH (escolhido bem antes do ADP): {nomeia(reaches)}\n"
-        if roubos:
-            destaques += f"- ROUBO (jogador caiu, saiu bem depois do ADP): {nomeia(roubos)}\n"
-    else:
-        destaques = "Nenhum reach ou roubo grande nessa rodada - mencione que os picks vieram dentro do esperado."
+    jogadores_pra_falar = "\n".join(descreve_selecionado(p) for p in selecionados)
 
     prompt = (
         "Voce e o Tom Brady comentando um draft de fantasy football. Seu foco "
@@ -280,19 +307,22 @@ def gerar_comentario_rodada(rodada: int) -> str | None:
         "em comparar tudo com a sua epoca.\n\n"
         f"Analise a RODADA {rodada} de um draft de fantasy football.\n\n"
         f"Picks da rodada:\n{lista_picks}\n\n"
-        f"{destaques}\n\n"
-        "OBRIGATORIO: cite pelo nome pelo menos um jogador dos destaques acima "
-        "e explique por que foi reach ou roubo, falando da qualidade/perfil "
-        "dele. NAO fale os numeros do ADP em voz alta no comentario, so use "
-        "isso como contexto pra voce julgar.\n\n"
-        "Escreva um paragrafo curto (no maximo 4 linhas), em portugues do "
+        f"OBRIGATORIO: cite pelo nome estes 3 jogadores especificos, nessa "
+        f"ordem de prioridade (fale mais dos que forem REACH/ROUBO, mas "
+        f"mencione os 3):\n{jogadores_pra_falar}\n\n"
+        "NAO fale os numeros do ADP em voz alta no comentario, so use isso "
+        "como contexto pra voce julgar.\n\n"
+        "Escreva um paragrafo curto (no maximo 5-6 linhas), em portugues do "
         "Brasil, na primeira pessoa como o Tom Brady, falando principalmente "
-        "das qualidades dos jogadores citados - pode puxar pra sua carreira "
-        "quando couber naturalmente, sem forcar. So o paragrafo, sem "
-        "introducao, sem aspas."
+        "das qualidades desses 3 jogadores - UMA OU DUAS FRASES CURTAS PRA "
+        "CADA jogador, sem se alongar demais em nenhum deles individualmente. "
+        "Pode puxar pra sua carreira quando couber naturalmente, sem forcar. "
+        "So o paragrafo, sem introducao, sem aspas."
     )
 
-    return chamar_groq(prompt, GROQ_MODELO, max_tokens=220)
+    # max_tokens maior que o comentario de pick unico (etapa 7 original) -
+    # precisa de espaco pra cobrir 3 jogadores sem cortar a fala no meio
+    return chamar_groq(prompt, GROQ_MODELO, max_tokens=380)
 
 
 def narrar_pick_em_segundo_plano(numero_pick: int, nome_jogador: str) -> None:
