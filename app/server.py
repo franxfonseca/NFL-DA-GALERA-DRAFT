@@ -239,10 +239,12 @@ def chamar_groq(prompt: str, modelo: str, max_tokens: int, temperatura: float = 
 
 def gerar_comentario_rodada(rodada: int) -> str | None:
     """Chama o Groq (gratis, rapido) pra uma analise curta da RODADA inteira,
-    no estilo do Tom Brady: saudosista e nostalgico do proprio tempo de jogador,
-    sempre comparando tudo com sua carreira e seus 7 aneis de campeao. Roda em
-    background - se falhar ou demorar, o show nao espera (degradacao
-    silenciosa). Sem chave configurada, nem tenta."""
+    no estilo do Tom Brady: foco principal nas QUALIDADES dos jogadores
+    draftados (habilidade, estilo de jogo, potencial, encaixe no time), citando
+    seu proprio tempo de jogador e os 7 aneis quando cabe naturalmente na fala,
+    sem virar comparacao constante. Roda em background - se falhar ou demorar,
+    o show nao espera (degradacao silenciosa). Sem chave configurada, nem
+    tenta."""
     picks_da_rodada = [p for p in estado["picks"] if p["rodada"] == rodada]
     if not picks_da_rodada:
         return None
@@ -269,23 +271,25 @@ def gerar_comentario_rodada(rodada: int) -> str | None:
         destaques = "Nenhum reach ou roubo grande nessa rodada - mencione que os picks vieram dentro do esperado."
 
     prompt = (
-        "Voce e o Tom Brady comentando um draft de fantasy football. Voce e "
-        "saudosista e nostalgico do seu proprio tempo como jogador, sempre "
-        "puxando pra sua carreira e seus 7 aneis de campeao do Super Bowl. "
-        "Compara os jogadores de hoje com voce mesmo na epoca de ouro, com um "
-        "certo orgulho e um pouco de deboche.\n\n"
-        f"Analise a RODADA {rodada} de um draft de fantasy football como um "
-        "especialista faria de verdade.\n\n"
+        "Voce e o Tom Brady comentando um draft de fantasy football. Seu foco "
+        "principal e analisar as QUALIDADES dos jogadores escolhidos - "
+        "habilidade, estilo de jogo, potencial, encaixe no time - como um "
+        "especialista de verdade faria. Voce pode citar seu proprio tempo como "
+        "jogador e seus 7 aneis de campeao quando fizer sentido natural na "
+        "fala, mas isso e tempero, nao o assunto principal - nao fique preso "
+        "em comparar tudo com a sua epoca.\n\n"
+        f"Analise a RODADA {rodada} de um draft de fantasy football.\n\n"
         f"Picks da rodada:\n{lista_picks}\n\n"
         f"{destaques}\n\n"
         "OBRIGATORIO: cite pelo nome pelo menos um jogador dos destaques acima "
-        "e explique por que foi reach ou roubo. Nao fique so no "
-        "genérico/nostalgico - traga os nomes. NAO fale os numeros do ADP em "
-        "voz alta no comentario, so use isso como contexto pra voce julgar.\n\n"
+        "e explique por que foi reach ou roubo, falando da qualidade/perfil "
+        "dele. NAO fale os numeros do ADP em voz alta no comentario, so use "
+        "isso como contexto pra voce julgar.\n\n"
         "Escreva um paragrafo curto (no maximo 4 linhas), em portugues do "
-        "Brasil, na primeira pessoa como o Tom Brady, saudosista e nostalgico "
-        "dos seus titulos, mas citando os jogadores especificos. So o "
-        "paragrafo, sem introducao, sem aspas."
+        "Brasil, na primeira pessoa como o Tom Brady, falando principalmente "
+        "das qualidades dos jogadores citados - pode puxar pra sua carreira "
+        "quando couber naturalmente, sem forcar. So o paragrafo, sem "
+        "introducao, sem aspas."
     )
 
     return chamar_groq(prompt, GROQ_MODELO, max_tokens=220)
@@ -344,9 +348,11 @@ def gerar_analise_final() -> dict | None:
         "resultado final de um draft. Seja direto, especifico e justo - "
         "elogie boas escolhas e critique elencos desequilibrados ou fracos.\n\n"
         f"Elencos formados no draft:\n\n{elencos}\n\n"
-        "Voce e o Tom Brady, falando diretamente com cada dono de time sobre o "
-        "elenco que ele montou - saudosista da sua propria carreira e seus 7 "
-        "aneis, comparando os jogadores de hoje com a epoca dele.\n\n"
+        "Voce e o Tom Brady, falando diretamente com cada dono de time sobre "
+        "as QUALIDADES do elenco que ele montou - habilidade dos jogadores, "
+        "encaixe, potencial. Pode citar sua propria carreira e seus 7 aneis "
+        "quando fizer sentido natural, mas o foco e o elenco em si, nao "
+        "comparacao constante com a epoca dele.\n\n"
         "Responda SOMENTE com um JSON valido, nesse formato exato:\n"
         '{"resumo_geral": "2-3 frases do Tom Brady sobre o draft como um '
         'todo, na primeira pessoa, destacando o melhor e o pior elenco", '

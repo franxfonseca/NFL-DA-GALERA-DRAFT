@@ -46,7 +46,7 @@ regra, a feature é cortada.
   custo zero original por qualidade de narração. `speechSynthesis` do
   navegador continua como fallback automático se a API falhar/demorar
   (nunca fica em silêncio). Na narração do pick especificamente, o board
-  espera até 3s pelo áudio da ElevenLabs (a foto/anúncio já aparecem na tela
+  espera até 2s pelo áudio da ElevenLabs (a foto/anúncio já aparecem na tela
   nesse meio tempo) antes de cair pro TTS local — decisão consciente do
   Francisco de abrir mão de parte da latência zero da regra 5 em troca de
   ouvir a voz boa na maioria dos picks

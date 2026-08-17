@@ -92,9 +92,9 @@ let estadoMaisRecente = null;
 // TEMPO_ESPERA_AUDIO_PICK_MS: quanto tempo a narracao de um pick espera pelo
 // audio "bonito" da ElevenLabs antes de desistir e usar o TTS local do
 // navegador. Escolha consciente do Francisco: o show pode segurar a fala por
-// ate 3s (o resto da coreografia - foto borrada, "escolha numero X" - ja
+// ate 2s (o resto da coreografia - foto borrada, "escolha numero X" - ja
 // esta na tela nesse meio tempo), mas nunca fica esperando pra sempre.
-const TEMPO_ESPERA_AUDIO_PICK_MS = 3000;
+const TEMPO_ESPERA_AUDIO_PICK_MS = 2000;
 const esperandoAudioPick = new Map(); // numero do pick -> resolve(url|null)
 
 function aguardarAudioPick(numeroPick) {
