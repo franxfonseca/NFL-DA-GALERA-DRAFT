@@ -237,35 +237,36 @@ def chamar_groq(prompt: str, modelo: str, max_tokens: int, temperatura: float = 
         return None
 
 
-def selecionar_destaques_rodada(picks_da_rodada: list[dict], quantidade: int = 3) -> list[dict]:
-    """Sempre devolve um numero fixo de jogadores pra IA comentar (nao deixa a
-    escolha solta pro modelo) - prioridade pros reach/roubo da rodada (o que
-    realmente rende comentario), completando com outros jogadores da rodada
-    ate a quantidade pedida. Na hora de completar, prefere posicoes ainda nao
-    representadas entre os ja escolhidos, pra variar em vez de repetir posicao."""
-    escolhidos = [p for p in picks_da_rodada if p["veredito"] in ("reach", "roubo")][:quantidade]
+def selecionar_destaques_rodada(picks_da_rodada: list[dict], minimo: int = 3) -> list[dict]:
+    """Todo reach/roubo da rodada entra, sem limite - sao o que rende
+    comentario critico de verdade. Numa rodada fraca (poucos ou nenhum
+    reach/roubo), completa com outros jogadores da rodada ate um minimo de
+    'minimo', pra nao virar um comentario vazio. Na hora de completar,
+    prefere posicoes ainda nao representadas entre os ja escolhidos, pra
+    variar em vez de repetir posicao."""
+    escolhidos = [p for p in picks_da_rodada if p["veredito"] in ("reach", "roubo")]
 
-    if len(escolhidos) < quantidade:
+    if len(escolhidos) < minimo:
         ja_escolhidos = {p["pick"] for p in escolhidos}
         posicoes_usadas = {p["posicao"] for p in escolhidos}
         restantes = [p for p in picks_da_rodada if p["pick"] not in ja_escolhidos]
 
         for p in restantes:
-            if len(escolhidos) >= quantidade:
+            if len(escolhidos) >= minimo:
                 break
             if p["posicao"] not in posicoes_usadas:
                 escolhidos.append(p)
                 posicoes_usadas.add(p["posicao"])
 
-        if len(escolhidos) < quantidade:
+        if len(escolhidos) < minimo:
             ja_escolhidos = {p["pick"] for p in escolhidos}
             for p in restantes:
-                if len(escolhidos) >= quantidade:
+                if len(escolhidos) >= minimo:
                     break
                 if p["pick"] not in ja_escolhidos:
                     escolhidos.append(p)
 
-    return escolhidos[:quantidade]
+    return escolhidos
 
 
 def gerar_comentario_rodada(rodada: int) -> str | None:
@@ -307,22 +308,30 @@ def gerar_comentario_rodada(rodada: int) -> str | None:
         "em comparar tudo com a sua epoca.\n\n"
         f"Analise a RODADA {rodada} de um draft de fantasy football.\n\n"
         f"Picks da rodada:\n{lista_picks}\n\n"
-        f"OBRIGATORIO: cite pelo nome estes 3 jogadores especificos, nessa "
-        f"ordem de prioridade (fale mais dos que forem REACH/ROUBO, mas "
-        f"mencione os 3):\n{jogadores_pra_falar}\n\n"
-        "NAO fale os numeros do ADP em voz alta no comentario, so use isso "
-        "como contexto pra voce julgar.\n\n"
-        "Escreva um paragrafo curto (no maximo 5-6 linhas), em portugues do "
-        "Brasil, na primeira pessoa como o Tom Brady, falando principalmente "
-        "das qualidades desses 3 jogadores - UMA OU DUAS FRASES CURTAS PRA "
-        "CADA jogador, sem se alongar demais em nenhum deles individualmente. "
-        "Pode puxar pra sua carreira quando couber naturalmente, sem forcar. "
-        "So o paragrafo, sem introducao, sem aspas."
+        f"OBRIGATORIO: cite pelo nome TODOS estes {len(selecionados)} jogadores "
+        f"da rodada, nenhum a mais, nenhum a menos:\n{jogadores_pra_falar}\n\n"
+        "Para os que forem REACH ou ROUBO, seja CRITICO de verdade, SEM "
+        "EXCECAO - questione a escolha, desafie o timing do pick, de sua "
+        "opiniao sincera (pode ser dura) sobre por que foi cedo/tarde demais. "
+        "Pros outros (preenchimento, sem veredito de reach/roubo), pode so "
+        "elogiar as qualidades. NAO cite nenhum outro jogador da rodada alem "
+        "desses. NAO fale os numeros do ADP em voz alta no comentario, so use "
+        "isso como contexto pra voce julgar.\n\n"
+        "Escreva um paragrafo em portugues do Brasil, na primeira pessoa como "
+        "o Tom Brady - uma ou duas frases curtas pra cada jogador da lista, "
+        "sem se alongar demais em nenhum deles individualmente. Pode puxar "
+        "pra sua carreira quando couber naturalmente, sem forcar. Responda "
+        "APENAS com o paragrafo do Brady - sem introducao, sem aspas, sem "
+        "nenhuma frase de fechamento tipo 'posso continuar' ou pedindo o "
+        "proximo passo."
     )
 
-    # max_tokens maior que o comentario de pick unico (etapa 7 original) -
-    # precisa de espaco pra cobrir 3 jogadores sem cortar a fala no meio
-    return chamar_groq(prompt, GROQ_MODELO, max_tokens=380)
+    # modelo maior (o mesmo da analise final) - o rapido (8B) comecava a
+    # inventar jogador fora da lista ou perder o tom critico quando tinha
+    # que cobrir varios reach/roubo na mesma rodada. Ainda roda em segundo
+    # plano, entao a latencia extra nao trava o show
+    max_tokens_comentario = min(700, 200 + 100 * len(selecionados))
+    return chamar_groq(prompt, GROQ_MODELO_FINAL, max_tokens=max_tokens_comentario, timeout=15)
 
 
 def narrar_pick_em_segundo_plano(numero_pick: int, nome_jogador: str) -> None:
