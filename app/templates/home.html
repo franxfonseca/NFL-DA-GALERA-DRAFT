@@ -99,9 +99,8 @@
 
     <script src="{{ url_for('static', filename='narrador.js') }}"></script>
     <script>
-        // a mensagem vem do servidor com tags <break> pra pausa na ElevenLabs -
-        // pra exibir na tela e pro fallback (TTS local, que nao entende a tag),
-        // tira as tags e sobra so o texto puro
+        // a mensagem vem do servidor - pausas sao so pontuacao (sem tags),
+        // mas mantem essa limpeza como garantia caso alguma tag escape
         const MENSAGEM_CRUA = {{ mensagem_boas_vindas | tojson }};
         const MENSAGEM_LIMPA = MENSAGEM_CRUA.replace(/<break[^>]*\/?>/g, " ").replace(/\s+/g, " ").trim();
 

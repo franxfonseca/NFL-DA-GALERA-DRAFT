@@ -18,24 +18,72 @@ body {
     flex-direction: column;
 }
 
+/* colunas largas + 15 rodadas nao cabem na tela de uma vez - #board vira o
+   proprio container de rolagem (nos dois eixos). Cabecalho dos times fica
+   fixo no topo e a coluna de rodadas fica fixa na esquerda via
+   position:sticky, entao o operador nunca perde a referencia de quem e
+   quem enquanto rola pra ver o resto do board */
 #board {
+    --altura-card: 4.6vw;
     display: grid;
-    grid-template-columns: repeat(12, 1fr);
+    grid-template-columns: 78px repeat(12, 260px);
+    align-items: start; /* colunas nao esticam pra altura toda - cada uma cresce so o tanto que precisa */
     width: 100vw;
     flex: 1;
     min-height: 0;
     gap: 2px;
     background: #000;
+    overflow: auto;
+}
+
+#board::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+}
+
+#board::-webkit-scrollbar-track {
+    background: #12161f;
+}
+
+#board::-webkit-scrollbar-thumb {
+    background: #444d63;
+    border-radius: 7px;
+    border: 3px solid #12161f;
+}
+
+#board::-webkit-scrollbar-thumb:hover {
+    background: #d8c98a;
+}
+
+#board::-webkit-scrollbar-corner {
+    background: #12161f;
 }
 
 .coluna {
     display: flex;
     flex-direction: column;
     background: #12161f;
-    overflow: hidden;
+}
+
+/* z-index alto no CONTAINER (nao so no cabecalho filho) - .coluna-rodadas
+   e sticky, entao cria seu proprio contexto de empilhamento: um z-index
+   maior so no filho nao adianta nada se o pai perde a comparacao la fora
+   contra os cabecalhos sticky dos times (que tambem sao sticky, z-index 10) */
+.coluna-rodadas {
+    position: sticky;
+    left: 0;
+    z-index: 20;
+}
+
+.coluna-rodadas .nome-time {
+    font-size: 0.72vw; /* coluna estreita - "RODADAS" nao cabe no tamanho padrao */
+    white-space: nowrap;
 }
 
 .coluna-cabecalho {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     text-align: center;
     padding: 0.5vw 0.3vw;
     background: #1b2130;
@@ -55,17 +103,16 @@ body {
 }
 
 .coluna-picks {
-    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 4px;
     padding: 4px;
-    overflow-y: auto;
 }
 
 /* card padronizado: foto pequena a esquerda, texto a direita - tamanho fixo
    independente do tanto de texto (nome longo trunca com reticencias em vez
-   de esticar o card) */
+   de esticar o card). Altura vem de --altura-card (definida em #board) pra
+   ficar sempre igual a .rodada-label e as linhas alinharem entre as colunas */
 .pick-card {
     display: flex;
     flex-direction: row;
@@ -75,17 +122,17 @@ body {
     border-left: 4px solid var(--cor-time, #444);
     border-radius: 4px;
     padding: 0.3vw 0.5vw;
-    height: 3.6vw;
-    min-height: 44px;
+    height: var(--altura-card);
+    min-height: 56px;
     overflow: hidden;
     animation: entrada 0.4s ease-out;
 }
 
 .pick-card img {
-    width: 2.8vw;
-    height: 2.8vw;
-    min-width: 36px;
-    min-height: 36px;
+    width: 3.5vw;
+    height: 3.5vw;
+    min-width: 45px;
+    min-height: 45px;
     aspect-ratio: 1 / 1;
     object-fit: cover;
     border-radius: 4px;
@@ -121,6 +168,20 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.rodada-label {
+    height: var(--altura-card);
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1b2130;
+    border-radius: 4px;
+    color: #a0a8bd;
+    font-size: 0.85vw;
+    font-weight: 700;
+    letter-spacing: 0.03em;
 }
 
 @keyframes entrada {

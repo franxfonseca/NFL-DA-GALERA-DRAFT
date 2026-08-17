@@ -156,7 +156,9 @@ function atualizarComentarista(rodada, texto) {
 }
 
 function atualizarCabecalhos(times) {
-    document.querySelectorAll(".coluna").forEach((coluna) => {
+    // so colunas de time de verdade tem data-slot - a coluna de rodadas
+    // (a esquerda) nao tem nome-dono, entao fica de fora desse seletor
+    document.querySelectorAll(".coluna[data-slot]").forEach((coluna) => {
         const slot = coluna.dataset.slot;
         const info = times[slot] || {};
         coluna.querySelector(".nome-time").textContent = info.nome_time || `Time ${slot}`;
@@ -166,8 +168,10 @@ function atualizarCabecalhos(times) {
 
 function redesenharBoard(picks) {
     // reconstroi tudo do zero - usado na 1a carga da pagina e depois de um
-    // desfazer/reset, onde nao faz sentido rodar a coreografia de novo
-    document.querySelectorAll(".coluna-picks").forEach((coluna) => {
+    // desfazer/reset, onde nao faz sentido rodar a coreografia de novo.
+    // So limpa colunas de time (com data-slot) - a coluna de rodadas (a
+    // esquerda) tem a mesma classe .coluna-picks mas nao pode ser limpa aqui
+    document.querySelectorAll(".coluna[data-slot] .coluna-picks").forEach((coluna) => {
         coluna.innerHTML = "";
     });
     for (const pick of picks) {

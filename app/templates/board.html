@@ -7,6 +7,16 @@
 </head>
 <body>
     <div id="board">
+        <div class="coluna coluna-rodadas">
+            <div class="coluna-cabecalho">
+                <div class="nome-time">RODADAS</div>
+            </div>
+            <div class="coluna-picks">
+                {% for rodada in range(1, 17) %}
+                <div class="rodada-label">RD {{ rodada }}</div>
+                {% endfor %}
+            </div>
+        </div>
         {% for slot in range(1, num_times + 1) %}
         <div class="coluna" data-slot="{{ slot }}">
             <div class="coluna-cabecalho">
