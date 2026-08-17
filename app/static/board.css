@@ -96,11 +96,16 @@ body {
     white-space: nowrap;
 }
 
-/* celula "RODADAS" (canto fixo) em cinza escuro - diferente do azul vivo
-   dos cabecalhos de time, pra marcar que essa coluna e navegacao, nao time */
+/* celula "RODADAS" (canto fixo) em cinza claro - mesmo tom cinza usado no
+   resto do board (RD 1-16), diferente da cor dos cabecalhos de time, pra
+   marcar que essa coluna e navegacao, nao time */
 .coluna-rodadas .coluna-cabecalho {
-    background: #3a4451;
-    border-bottom-color: rgba(0, 0, 0, 0.3);
+    background: var(--cinza-borda);
+    border-bottom-color: #c7cfda;
+}
+
+.coluna-rodadas .nome-time {
+    color: var(--texto-principal);
 }
 
 /* botao de mutar a narracao - fica no canto fixo, sempre visivel, no
@@ -109,7 +114,7 @@ body {
     margin-top: 2px;
     background: transparent;
     border: none;
-    color: #ffffff;
+    color: var(--texto-principal);
     font-size: 0.85vw;
     line-height: 1;
     cursor: pointer;
