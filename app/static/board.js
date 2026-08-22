@@ -328,11 +328,11 @@ async function revelarPick(pick) {
 
     // ~1s: veredito reach/steal, se tiver ADP suficiente pra calcular
     if (pick.veredito === "roubo") {
-        veredictoEl.textContent = "🔥 ROUBO";
+        veredictoEl.textContent = "ROUBO";
         veredictoEl.classList.add("roubo");
         tocarSom("roubo");
     } else if (pick.veredito === "reach") {
-        veredictoEl.textContent = "💀 REACH";
+        veredictoEl.textContent = "REACH";
         veredictoEl.classList.add("reach");
         tocarSom("reach");
     }

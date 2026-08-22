@@ -1,31 +1,100 @@
+/* ============================================================
+   DRAFT NIGHT — sistema tipografico e de cor
+   Papel + tinta dominam; azul NFL e SEMPRE acento (nunca fundo
+   cobrindo area grande). Sem gradiente, sem sombra decorativa,
+   sem canto arredondado em excesso. A cor de cada time e um
+   detalhe (tarja, borda), nunca um bloco solido de cor.
+   Fontes hospedadas localmente - regra do projeto: nada depende
+   de rede durante o evento.
+   ============================================================ */
+
+@font-face {
+    font-family: "Fraunces";
+    src: url("/static/fonts/Fraunces-Variable.woff2") format("woff2");
+    font-weight: 300 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "IBM Plex Mono";
+    src: url("/static/fonts/IBMPlexMono-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "IBM Plex Mono";
+    src: url("/static/fonts/IBMPlexMono-SemiBold.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "IBM Plex Mono";
+    src: url("/static/fonts/IBMPlexMono-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "IBM Plex Serif";
+    src: url("/static/fonts/IBMPlexSerif-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "IBM Plex Serif";
+    src: url("/static/fonts/IBMPlexSerif-Italic.woff2") format("woff2");
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "IBM Plex Serif";
+    src: url("/static/fonts/IBMPlexSerif-SemiBold.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
-/* tema claro - cinza claro + azul vivo tipo NFL, pra fugir da cara escura
-   estilo Sleeper que o board tinha antes */
 :root {
-    --cinza-fundo: #eef1f6;
-    --cinza-grade: #d7dee7;
-    --cinza-coluna: #f4f6fa;
-    --branco-painel: #ffffff;
-    --cinza-borda: #dbe1e9;
-    --texto-principal: #17202e;
-    --texto-suave: #5b6577;
-    --texto-fraco: #94a0b3;
-    --azul-nfl: #013369;
-    --azul-vivo: #1456d6;
-    --azul-vivo-escuro: #0d3fae;
+    /* papel domina, tinta estrutura, aco e o UNICO acento de cor */
+    --papel: #f2efe7;
+    --papel-cartao: #faf8f3;
+    --linha: #ddd5c2;
+    --linha-forte: #c9bfa6;
+    --tinta: #14171b;
+    --tinta-suave: #5c584f;
+    --tinta-fraca: #8b877c;
+    --aco: #013369;
+    --aco-fraco: rgba(1, 51, 105, 0.1);
+    --roubo: #b8860b;
+    --reach: #a5342f;
+
+    --fonte-display: "Fraunces", Georgia, serif;
+    --fonte-corpo: "IBM Plex Serif", Georgia, serif;
+    --fonte-mono: "IBM Plex Mono", "Courier New", monospace;
 }
 
 html, body {
     width: 100%;
     height: 100%;
-    background: var(--cinza-fundo);
-    color: var(--texto-principal);
-    font-family: "Segoe UI", Arial, sans-serif;
+    background: var(--papel);
+    color: var(--tinta);
+    font-family: var(--fonte-corpo);
     overflow: hidden;
 }
 
@@ -34,7 +103,7 @@ body {
     flex-direction: column;
 }
 
-/* colunas largas + 15 rodadas nao cabem na tela de uma vez - #board vira o
+/* colunas largas + 16 rodadas nao cabem na tela de uma vez - #board vira o
    proprio container de rolagem (nos dois eixos). Cabecalho dos times fica
    fixo no topo e a coluna de rodadas fica fixa na esquerda via
    position:sticky, entao o operador nunca perde a referencia de quem e
@@ -42,13 +111,13 @@ body {
 #board {
     --altura-card: 4.6vw;
     display: grid;
-    grid-template-columns: 58px repeat(12, 234px); /* rodadas +5% (era 55px), times -10% */
+    grid-template-columns: 58px repeat(12, 234px);
     align-items: start; /* colunas nao esticam pra altura toda - cada uma cresce so o tanto que precisa */
     width: 100vw;
     flex: 1;
     min-height: 0;
-    gap: 2px;
-    background: var(--cinza-grade);
+    gap: 1px;
+    background: var(--linha);
     overflow: auto;
 }
 
@@ -58,27 +127,27 @@ body {
 }
 
 #board::-webkit-scrollbar-track {
-    background: var(--cinza-coluna);
+    background: var(--papel-cartao);
 }
 
 #board::-webkit-scrollbar-thumb {
-    background: var(--cinza-borda);
-    border-radius: 7px;
-    border: 3px solid var(--cinza-coluna);
+    background: var(--linha-forte);
+    border-radius: 0;
+    border: 3px solid var(--papel-cartao);
 }
 
 #board::-webkit-scrollbar-thumb:hover {
-    background: #c7cfda;
+    background: var(--tinta-fraca);
 }
 
 #board::-webkit-scrollbar-corner {
-    background: var(--cinza-coluna);
+    background: var(--papel-cartao);
 }
 
 .coluna {
     display: flex;
     flex-direction: column;
-    background: var(--cinza-coluna);
+    background: var(--papel-cartao);
 }
 
 /* z-index alto no CONTAINER (nao so no cabecalho filho) - .coluna-rodadas
@@ -92,47 +161,45 @@ body {
 }
 
 .coluna-rodadas .nome-time {
-    font-size: 0.46vw; /* coluna ficou mais estreita ainda - "RODADAS" precisa de fonte menor */
-    white-space: nowrap;
+    font-size: 0.62vw; /* coluna estreita - "RODADAS" precisa de fonte menor */
+    letter-spacing: 0.12em;
 }
 
-/* celula "RODADAS" (canto fixo) em cinza claro - mesmo tom cinza usado no
-   resto do board (RD 1-16), diferente da cor dos cabecalhos de time, pra
-   marcar que essa coluna e navegacao, nao time */
+/* celula "RODADAS" (canto fixo) - mesma base de papel do resto do board,
+   marcada so por uma regua fina embaixo. Nao e um time, entao nao leva
+   nenhuma cor de acento */
 .coluna-rodadas .coluna-cabecalho {
-    background: var(--cinza-borda);
-    border-bottom-color: #c7cfda;
+    background: var(--papel-cartao);
+    border-bottom: 2px solid var(--tinta);
 }
 
 .coluna-rodadas .nome-time {
-    color: var(--texto-principal);
+    color: var(--tinta);
 }
 
 /* botao de mutar a narracao - fica no canto fixo, sempre visivel, no
    espaco logo abaixo de "RODADAS" que antes ficava vazio */
 #btn-mutar {
-    margin-top: 2px;
+    margin-top: 3px;
     background: transparent;
     border: none;
-    color: var(--texto-principal);
-    font-size: 0.85vw;
+    color: var(--tinta-suave);
+    font-size: 0.8vw;
     line-height: 1;
     cursor: pointer;
-    opacity: 0.85;
 }
 
 #btn-mutar:hover {
-    opacity: 1;
+    color: var(--tinta);
 }
 
 #btn-mutar.mutado {
-    opacity: 0.55;
+    color: var(--tinta-fraca);
 }
 
-/* altura fixa (nao so o tanto que o texto ocupa) - sem isso, o cabecalho
-   menor da coluna RODADAS (uma linha, "RODADAS") ficava mais baixo que o
-   cabecalho dos times (duas linhas, nome + dono), e a primeira linha de
-   picks desalinhava da linha "RD 1". Altura 30% menor que o original */
+/* cabecalho dos times: papel, texto em tinta - a cor escolhida pro time
+   (--cor-cabecalho, ver /control) vira uma REGUA fina no topo, nunca um
+   bloco solido cobrindo a celula inteira. "Mercurio sempre em minoria" */
 .coluna-cabecalho {
     position: sticky;
     top: 0;
@@ -144,50 +211,51 @@ body {
     justify-content: center;
     text-align: center;
     padding: 0.3vw;
-    background: var(--cor-cabecalho, var(--azul-vivo));
-    border-bottom: 2px solid rgba(0, 0, 0, 0.18);
-    border-radius: 0;
+    background: var(--papel-cartao);
+    border-top: 3px solid var(--cor-cabecalho, var(--aco));
+    border-bottom: 1px solid var(--linha-forte);
 }
 
 .nome-time {
-    font-size: 1.05vw;
-    font-weight: bold;
-    letter-spacing: 0.03em;
-    color: #ffffff;
+    font-family: var(--fonte-display);
+    font-size: 1.15vw;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--tinta);
 }
 
 .nome-dono {
-    font-size: 0.75vw;
-    color: #cddaf5;
-    margin-top: 2px;
+    font-family: var(--fonte-mono);
+    font-size: 0.62vw;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tinta-fraca);
+    margin-top: 3px;
 }
 
 .coluna-picks {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    /* padding de cima pela metade (2px) - o espaco entre o cabecalho colorido
-       e o 1o card mostrava o cinza bem claro da coluna, que lia como uma
-       "linha branca" por baixo dos nomes dos times */
-    padding: 2px 4px 4px 4px;
+    gap: 1px;
+    padding: 1px;
 }
 
 /* card padronizado: foto pequena a esquerda, texto a direita - tamanho fixo
    independente do tanto de texto (nome longo trunca com reticencias em vez
    de esticar o card). Altura vem de --altura-card (definida em #board) pra
-   ficar sempre igual a .rodada-label e as linhas alinharem entre as colunas */
-/* sem caixa branca por card - o board fica todo no cinza da coluna, e a
-   unica linha demarcando cada rodada e essa borda branca embaixo do card
-   (ver .rodada-label pra mesma linha na coluna de rodadas, alinhando a
-   "linha" pra parecer continua por toda a tabela) */
+   ficar sempre igual a .rodada-label e as linhas alinharem entre as colunas.
+   Fundo de papel continuo - a unica linha demarcando cada rodada e essa
+   regua embaixo do card (ver .rodada-label pra mesma regua na coluna de
+   rodadas, alinhando pra parecer continua por toda a tabela) */
 .pick-card {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 0.5vw;
     background: transparent;
-    border-left: 4px solid var(--cor-time, #444);
-    border-bottom: 2px solid #ffffff;
+    border-left: 3px solid var(--cor-time, var(--linha-forte));
+    border-bottom: 1px solid var(--linha);
     padding: 0.3vw 0.5vw;
     height: var(--altura-card);
     min-height: 56px;
@@ -202,8 +270,8 @@ body {
     min-height: 45px;
     aspect-ratio: 1 / 1;
     object-fit: cover;
-    border-radius: 4px;
-    background: var(--cinza-borda);
+    border-radius: 0;
+    background: var(--linha);
     flex-shrink: 0;
 }
 
@@ -216,56 +284,62 @@ body {
    pra nao competir com o nome/posicao, some sozinho se o logo desse time
    nao tiver sido baixado (ver onerror em criarCardPick) */
 .pick-card .logo-time {
-    width: 2.4vw;
-    height: 2.4vw;
-    min-width: 30px;
-    min-height: 30px;
+    width: 2.2vw;
+    height: 2.2vw;
+    min-width: 28px;
+    min-height: 28px;
     object-fit: contain;
     flex-shrink: 0;
-    opacity: 0.85;
+    opacity: 0.7;
 }
 
 .pick-card .nome {
-    font-size: 0.8vw;
+    font-family: var(--fonte-corpo);
+    font-size: 0.82vw;
     font-weight: 600;
     line-height: 1.2;
-    color: var(--texto-principal);
+    color: var(--tinta);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .pick-card .info {
-    font-size: 0.65vw;
-    color: var(--texto-suave);
+    font-family: var(--fonte-mono);
+    font-size: 0.6vw;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--tinta-suave);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .pick-card .rodada {
-    font-size: 0.58vw;
-    color: var(--texto-fraco);
+    font-family: var(--fonte-mono);
+    font-size: 0.56vw;
+    letter-spacing: 0.04em;
+    color: var(--tinta-fraca);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* coluna de rodadas em cinza (a linha 1/cabecalho e que fica no azul vivo
-   de destaque) - fica sempre visivel enquanto rola (sticky left em
-   .coluna-rodadas) */
+/* coluna de rodadas - mesma base de papel do board inteiro, tipografia
+   mono tracked (etiqueta de indice, nao "card de dado") */
 .rodada-label {
     height: var(--altura-card);
     min-height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--cinza-borda);
-    border-bottom: 2px solid #ffffff; /* mesma linha branca dos pick-cards, pra ficar continua na tabela toda */
-    color: var(--texto-principal);
-    font-size: 0.85vw;
-    font-weight: 700;
-    letter-spacing: 0.03em;
+    background: transparent;
+    border-bottom: 1px solid var(--linha);
+    color: var(--tinta-suave);
+    font-family: var(--fonte-mono);
+    font-size: 0.72vw;
+    font-weight: 600;
+    letter-spacing: 0.06em;
 }
 
 @keyframes entrada {
@@ -280,7 +354,7 @@ body {
 #desbloquear {
     position: fixed;
     inset: 0;
-    background: var(--cinza-fundo);
+    background: var(--papel);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -299,39 +373,52 @@ body {
 }
 
 .desbloquear-caixa label {
-    font-size: 1vw;
-    color: var(--texto-suave);
+    font-family: var(--fonte-mono);
+    font-size: 0.85vw;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tinta-suave);
 }
 
 #select-voz {
-    font-size: 1.2vw;
+    font-family: var(--fonte-corpo);
+    font-size: 1.1vw;
     padding: 0.5vw 1vw;
-    border-radius: 6px;
-    border: 2px solid var(--cinza-borda);
-    background: var(--branco-painel);
-    color: var(--texto-principal);
+    border-radius: 0;
+    border: 1px solid var(--linha-forte);
+    background: var(--papel-cartao);
+    color: var(--tinta);
 }
 
 #btn-desbloquear {
-    font-size: 2vw;
-    padding: 1.2vw 2.4vw;
-    background: #2e7d32;
-    color: #fff;
+    font-family: var(--fonte-mono);
+    font-size: 1.3vw;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 1vw 2.2vw;
+    background: var(--tinta);
+    color: var(--papel);
     border: none;
-    border-radius: 12px;
+    border-radius: 0;
     cursor: pointer;
-    font-weight: bold;
+    font-weight: 600;
     margin-top: 0.5vw;
+}
+
+#btn-desbloquear:hover {
+    background: var(--aco);
 }
 
 /* ---- coreografia de revelacao (etapa 4) ---- */
 /* fica escura de proposito, mesmo com o resto do board claro - e o momento
-   de holofote/suspense, o contraste com o board claro por tras reforca o efeito */
+   de holofote/suspense, o contraste com o board claro por tras reforca o
+   efeito. Texto em tom de papel (nao branco puro), fechando o circulo da
+   paleta: tinta sobre papel no board, papel sobre tinta na revelacao */
 
 #revelacao {
     position: fixed;
     inset: 0;
-    background: rgba(4, 6, 10, 0.92);
+    background: rgba(10, 9, 6, 0.94);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -350,9 +437,11 @@ body {
 }
 
 .revelacao-anuncio {
-    font-size: 2.2vw;
-    color: #a0a8bd;
-    letter-spacing: 0.15em;
+    font-family: var(--fonte-mono);
+    font-size: 1.3vw;
+    font-weight: 600;
+    color: var(--tinta-fraca);
+    letter-spacing: 0.35em;
     margin-bottom: 1.5vw;
 }
 
@@ -360,9 +449,9 @@ body {
     width: 22vw;
     height: 22vw;
     object-fit: cover;
-    border-radius: 16px;
-    border: 6px solid var(--cor-time, #444);
-    box-shadow: 0 0 1.5vw 0 var(--cor-time, #444);
+    border-radius: 0;
+    border: 4px solid var(--cor-time, var(--linha-forte));
+    box-shadow: 0 0 1.2vw 0 var(--cor-time, transparent);
     filter: blur(28px) brightness(0.6);
     transition: filter 0.7s ease, box-shadow 0.7s ease;
     background: #222;
@@ -370,17 +459,18 @@ body {
 
 #rev-foto.revelada {
     filter: blur(0) brightness(1);
-    box-shadow: 0 0 3.5vw 0.4vw var(--cor-time, #444);
+    box-shadow: 0 0 2.4vw 0.2vw var(--cor-time, transparent);
 }
 
 .revelacao-nome {
-    font-size: 4vw;
-    font-weight: 900;
-    color: #ffffff; /* o board de fundo agora e claro, mas essa caixa continua escura -
-                        sem cor explicita aqui, herdava o texto escuro do body e sumia */
+    font-family: var(--fonte-display);
+    font-size: 4.6vw;
+    font-weight: 600;
+    font-style: italic;
+    color: var(--papel);
     margin-top: 1vw;
     opacity: 0;
-    transform: scale(0.7);
+    transform: scale(0.94);
     transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
@@ -390,9 +480,12 @@ body {
 }
 
 .revelacao-info {
-    font-size: 1.6vw;
-    color: #ccc;
-    margin-top: 0.3vw;
+    font-family: var(--fonte-mono);
+    font-size: 1.1vw;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--tinta-fraca);
+    margin-top: 0.5vw;
     opacity: 0;
     transition: opacity 0.4s ease;
 }
@@ -402,9 +495,11 @@ body {
 }
 
 .revelacao-veredito {
-    font-size: 2.4vw;
-    font-weight: 900;
-    margin-top: 1.2vw;
+    font-family: var(--fonte-mono);
+    font-size: 1.5vw;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    margin-top: 1.4vw;
     opacity: 0;
     transform: translateY(15px);
     transition: opacity 0.4s ease, transform 0.4s ease;
@@ -415,8 +510,8 @@ body {
     transform: translateY(0);
 }
 
-.revelacao-veredito.roubo { color: #ffb703; }
-.revelacao-veredito.reach { color: #e63946; }
+.revelacao-veredito.roubo { color: var(--roubo); }
+.revelacao-veredito.reach { color: var(--reach); }
 
 /* rodape do comentarista - some entre uma rodada e outra (da mais espaco
    pro board), e "sobe" animado quando um comentario novo chega. Fica visivel
@@ -430,8 +525,8 @@ body {
     gap: 1vw;
     height: 0;
     padding: 0 1.5vw;
-    background: var(--cinza-coluna);
-    border-top: 0px solid var(--cinza-borda);
+    background: var(--papel-cartao);
+    border-top: 0px solid var(--tinta);
     overflow: hidden;
     transition: height 0.6s ease, padding 0.6s ease, border-top-width 0.6s ease;
 }
@@ -446,17 +541,18 @@ body {
     height: 100%;
     aspect-ratio: 1 / 1;
     object-fit: cover;
-    border-radius: 50%;
-    border: 3px solid var(--azul-vivo);
+    border-radius: 0;
+    border: 2px solid var(--aco);
     flex-shrink: 0;
 }
 
 .balao {
     position: relative;
-    background: var(--branco-painel);
-    border: 2px solid var(--cinza-borda);
-    border-radius: 12px;
-    padding: 0.6vw 1.2vw;
+    background: transparent;
+    border: none;
+    border-left: 2px solid var(--linha-forte);
+    border-radius: 0;
+    padding: 0.4vw 0 0.4vw 1.4vw;
     flex: 1;
     height: 100%;
     display: flex;
@@ -464,37 +560,22 @@ body {
     justify-content: center;
 }
 
-.balao::before {
-    content: "";
-    position: absolute;
-    left: -14px;
-    top: 50%;
-    transform: translateY(-50%);
-    border: 10px solid transparent;
-    border-right-color: var(--cinza-borda);
-}
-
-.balao::after {
-    content: "";
-    position: absolute;
-    left: -10px;
-    top: 50%;
-    transform: translateY(-50%);
-    border: 8px solid transparent;
-    border-right-color: var(--branco-painel);
-}
-
 .balao-titulo {
-    font-size: 0.8vw;
-    color: var(--texto-suave);
-    letter-spacing: 0.05em;
-    margin-bottom: 0.2vw;
+    font-family: var(--fonte-mono);
+    font-size: 0.75vw;
+    font-weight: 600;
+    color: var(--tinta-fraca);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.3vw;
 }
 
 .balao-texto {
-    font-size: 1.6vw;
+    font-family: var(--fonte-corpo);
+    font-style: italic;
+    font-size: 1.55vw;
     line-height: 1.4;
-    color: var(--texto-principal);
+    color: var(--tinta);
     overflow-y: auto;
     max-height: 100%;
 }
