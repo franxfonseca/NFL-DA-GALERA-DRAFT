@@ -67,6 +67,11 @@ GROQ_MODELO = "llama-3.1-8b-instant"  # rapido - comentario de rodada, ao vivo
 GROQ_MODELO_FINAL = "llama-3.3-70b-versatile"  # maior - analise final, sem pressa
 
 ELEVENLABS_API_KEY = carregar_env().get("ELEVENLABS_API_KEY", "")
+# chave reserva, de outra conta - usada so se a principal falhar (sem
+# credito, rate limit, etc.), pra narracao nao cair pro TTS local a noite
+# inteira so por causa de credito acabado numa conta so
+ELEVENLABS_API_KEY_FALLBACK = carregar_env().get("ELEVENLABS_API_KEY_FALLBACK", "")
+ELEVENLABS_CHAVES = [k for k in (ELEVENLABS_API_KEY, ELEVENLABS_API_KEY_FALLBACK) if k]
 ELEVENLABS_VOICE_ID = "VR6AewLTigWG4xSOukaG"  # Arnold - grave e energica, escolhida pelo Francisco
 ELEVENLABS_MODELO = "eleven_multilingual_v2"
 ELEVENLABS_VELOCIDADE = 0.9
@@ -107,30 +112,34 @@ def nome_audio(prefixo: str, texto: str) -> str:
 
 def gerar_audio(texto: str, nome_arquivo: str) -> bool:
     """Gera audio via ElevenLabs e salva em AUDIO_DIR - se o arquivo ja existe,
-    nem chama a API de novo (os creditos sao limitados). Falha silenciosa:
-    quem chama decide o fallback (speechSynthesis local no navegador)."""
+    nem chama a API de novo (os creditos sao limitados). Tenta a chave
+    principal e, se falhar (sem credito, rate limit, etc.), cai pra chave
+    reserva (ELEVENLABS_API_KEY_FALLBACK, outra conta) antes de desistir.
+    Falha silenciosa: quem chama decide o fallback final (speechSynthesis
+    local no navegador)."""
     caminho = AUDIO_DIR / nome_arquivo
     if caminho.exists():
         return True
-    if not ELEVENLABS_API_KEY:
-        return False
-    try:
-        resposta = requests.post(
-            f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}",
-            headers={"xi-api-key": ELEVENLABS_API_KEY, "Content-Type": "application/json"},
-            json={
-                "text": texto,
-                "model_id": ELEVENLABS_MODELO,
-                "voice_settings": {"speed": ELEVENLABS_VELOCIDADE},
-            },
-            timeout=20,
-        )
-        resposta.raise_for_status()
-        caminho.write_bytes(resposta.content)
-        return True
-    except Exception as erro:
-        print(f"[audio ElevenLabs falhou] {nome_arquivo}: {erro}")
-        return False
+
+    for chave in ELEVENLABS_CHAVES:
+        try:
+            resposta = requests.post(
+                f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}",
+                headers={"xi-api-key": chave, "Content-Type": "application/json"},
+                json={
+                    "text": texto,
+                    "model_id": ELEVENLABS_MODELO,
+                    "voice_settings": {"speed": ELEVENLABS_VELOCIDADE},
+                },
+                timeout=20,
+            )
+            resposta.raise_for_status()
+            caminho.write_bytes(resposta.content)
+            return True
+        except Exception as erro:
+            print(f"[audio ElevenLabs falhou, tentando proxima chave se houver] {nome_arquivo}: {erro}")
+
+    return False
 
 
 def carregar_json(nome_arquivo: str) -> dict:
