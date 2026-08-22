@@ -1,65 +1,36 @@
 /* ============================================================
-   DRAFT NIGHT — sistema tipografico e de cor
-   Papel + tinta dominam; azul NFL e SEMPRE acento (nunca fundo
-   cobrindo area grande). Sem gradiente, sem sombra decorativa,
-   sem canto arredondado em excesso. A cor de cada time e um
-   detalhe (tarja, borda), nunca um bloco solido de cor.
-   Fontes hospedadas localmente - regra do projeto: nada depende
-   de rede durante o evento.
+   DRAFT NIGHT — sistema visual proprio: "cartela de colecionador"
+   Base clara (papel/cartao) + tinta quase-preta estruturam tudo.
+   Cada card e um objeto solido: borda grossa de tinta + sombra dura
+   (offset, sem blur) na cor do time - o card "descola" da mesa como
+   uma cartela de colecionador, nao um retangulo flat de dashboard.
+   Tipografia condensada/bold pros numeros e nomes (energia de
+   placar), texto tecnico em caixa alta com tracking pros metadados
+   (etiqueta de cartela). Sem gradiente, sem blur decorativo, sem
+   emoji na revelacao. Fontes hospedadas localmente - regra do
+   projeto: nada depende de rede durante o evento.
    ============================================================ */
 
 @font-face {
-    font-family: "Fraunces";
-    src: url("/static/fonts/Fraunces-Variable.woff2") format("woff2");
-    font-weight: 300 900;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: "IBM Plex Mono";
-    src: url("/static/fonts/IBMPlexMono-Regular.woff2") format("woff2");
+    font-family: "Anton";
+    src: url("/static/fonts/Anton-Regular.woff2") format("woff2");
     font-weight: 400;
     font-style: normal;
     font-display: swap;
 }
 
 @font-face {
-    font-family: "IBM Plex Mono";
-    src: url("/static/fonts/IBMPlexMono-SemiBold.woff2") format("woff2");
-    font-weight: 600;
+    font-family: "Archivo";
+    src: url("/static/fonts/Archivo-Variable.woff2") format("woff2");
+    font-weight: 400 700;
     font-style: normal;
     font-display: swap;
 }
 
 @font-face {
-    font-family: "IBM Plex Mono";
-    src: url("/static/fonts/IBMPlexMono-Bold.woff2") format("woff2");
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: "IBM Plex Serif";
-    src: url("/static/fonts/IBMPlexSerif-Regular.woff2") format("woff2");
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: "IBM Plex Serif";
-    src: url("/static/fonts/IBMPlexSerif-Italic.woff2") format("woff2");
-    font-weight: 400;
-    font-style: italic;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: "IBM Plex Serif";
-    src: url("/static/fonts/IBMPlexSerif-SemiBold.woff2") format("woff2");
-    font-weight: 600;
+    font-family: "Archivo Narrow";
+    src: url("/static/fonts/ArchivoNarrow-Variable.woff2") format("woff2");
+    font-weight: 600 700;
     font-style: normal;
     font-display: swap;
 }
@@ -71,22 +42,22 @@
 }
 
 :root {
-    /* papel domina, tinta estrutura, aco e o UNICO acento de cor */
-    --papel: #f2efe7;
-    --papel-cartao: #faf8f3;
-    --linha: #ddd5c2;
-    --linha-forte: #c9bfa6;
-    --tinta: #14171b;
-    --tinta-suave: #5c584f;
-    --tinta-fraca: #8b877c;
-    --aco: #013369;
-    --aco-fraco: rgba(1, 51, 105, 0.1);
-    --roubo: #b8860b;
-    --reach: #a5342f;
+    /* base clara domina, tinta estrutura (borda grossa em tudo),
+       azul NFL e o acento estrutural unico - ouro/vermelho so pro
+       veredito reach/roubo, nunca decorativo */
+    --papel: #f5f5f1;
+    --cartao: #ffffff;
+    --linha: #e2e4e8;
+    --tinta: #0b0e14;
+    --tinta-suave: #565c68;
+    --tinta-fraca: #9299a6;
+    --nfl-azul: #013369;
+    --ouro: #b8860b;
+    --vermelho: #a5342f;
 
-    --fonte-display: "Fraunces", Georgia, serif;
-    --fonte-corpo: "IBM Plex Serif", Georgia, serif;
-    --fonte-mono: "IBM Plex Mono", "Courier New", monospace;
+    --fonte-placar: "Anton", "Arial Narrow", sans-serif;
+    --fonte-corpo: "Archivo", Arial, sans-serif;
+    --fonte-etiqueta: "Archivo Narrow", Arial, sans-serif;
 }
 
 html, body {
@@ -109,15 +80,15 @@ body {
    position:sticky, entao o operador nunca perde a referencia de quem e
    quem enquanto rola pra ver o resto do board */
 #board {
-    --altura-card: 4.6vw;
+    --altura-card: 4.7vw;
     display: grid;
     grid-template-columns: 58px repeat(12, 234px);
     align-items: start; /* colunas nao esticam pra altura toda - cada uma cresce so o tanto que precisa */
     width: 100vw;
     flex: 1;
     min-height: 0;
-    gap: 1px;
-    background: var(--linha);
+    gap: 2px;
+    background: var(--papel);
     overflow: auto;
 }
 
@@ -127,27 +98,27 @@ body {
 }
 
 #board::-webkit-scrollbar-track {
-    background: var(--papel-cartao);
+    background: var(--papel);
 }
 
 #board::-webkit-scrollbar-thumb {
-    background: var(--linha-forte);
+    background: var(--tinta);
     border-radius: 0;
-    border: 3px solid var(--papel-cartao);
+    border: 3px solid var(--papel);
 }
 
 #board::-webkit-scrollbar-thumb:hover {
-    background: var(--tinta-fraca);
+    background: var(--nfl-azul);
 }
 
 #board::-webkit-scrollbar-corner {
-    background: var(--papel-cartao);
+    background: var(--papel);
 }
 
 .coluna {
     display: flex;
     flex-direction: column;
-    background: var(--papel-cartao);
+    background: var(--papel);
 }
 
 /* z-index alto no CONTAINER (nao so no cabecalho filho) - .coluna-rodadas
@@ -161,16 +132,15 @@ body {
 }
 
 .coluna-rodadas .nome-time {
-    font-size: 0.62vw; /* coluna estreita - "RODADAS" precisa de fonte menor */
-    letter-spacing: 0.12em;
+    font-size: 0.6vw; /* coluna estreita - "RODADAS" precisa de fonte menor */
+    letter-spacing: 0.08em;
 }
 
-/* celula "RODADAS" (canto fixo) - mesma base de papel do resto do board,
-   marcada so por uma regua fina embaixo. Nao e um time, entao nao leva
-   nenhuma cor de acento */
+/* celula "RODADAS" (canto fixo) - mesma base do resto do board, sem
+   nenhuma cor de time (nao e um time, e navegacao) */
 .coluna-rodadas .coluna-cabecalho {
-    background: var(--papel-cartao);
-    border-bottom: 2px solid var(--tinta);
+    background: var(--cartao);
+    border-bottom: 3px solid var(--tinta);
 }
 
 .coluna-rodadas .nome-time {
@@ -197,80 +167,94 @@ body {
     color: var(--tinta-fraca);
 }
 
-/* cabecalho dos times: papel, texto em tinta - a cor escolhida pro time
-   (--cor-cabecalho, ver /control) vira uma REGUA fina no topo, nunca um
-   bloco solido cobrindo a celula inteira. "Mercurio sempre em minoria" */
+/* cabecalho dos times: cartao branco, borda grossa de tinta embaixo -
+   a cor escolhida pro time (--cor-cabecalho, ver /control) vira um chip
+   quadrado ao lado do nome (como um patch de uniforme), nunca um bloco
+   solido cobrindo a celula inteira */
 .coluna-cabecalho {
     position: sticky;
     top: 0;
     z-index: 10;
-    height: 2.56vw;
-    min-height: 41px;
+    height: 2.7vw;
+    min-height: 43px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     text-align: center;
     padding: 0.3vw;
-    background: var(--papel-cartao);
-    border-top: 3px solid var(--cor-cabecalho, var(--aco));
-    border-bottom: 1px solid var(--linha-forte);
+    background: var(--cartao);
+    border-bottom: 3px solid var(--tinta);
 }
 
 .nome-time {
-    font-family: var(--fonte-display);
+    font-family: var(--fonte-placar);
     font-size: 1.15vw;
-    font-weight: 600;
+    font-weight: 400;
     letter-spacing: 0.01em;
+    text-transform: uppercase;
     color: var(--tinta);
 }
 
+.nome-time::before {
+    content: "";
+    display: inline-block;
+    width: 0.6vw;
+    height: 0.6vw;
+    min-width: 8px;
+    min-height: 8px;
+    margin-right: 0.4vw;
+    background: var(--cor-cabecalho, var(--nfl-azul));
+    border: 1px solid var(--tinta);
+    vertical-align: middle;
+}
+
 .nome-dono {
-    font-family: var(--fonte-mono);
-    font-size: 0.62vw;
-    font-weight: 400;
-    letter-spacing: 0.08em;
+    font-family: var(--fonte-etiqueta);
+    font-size: 0.6vw;
+    font-weight: 700;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--tinta-fraca);
-    margin-top: 3px;
+    margin-top: 2px;
 }
 
 .coluna-picks {
     display: flex;
     flex-direction: column;
-    gap: 1px;
-    padding: 1px;
+    gap: 0.5vw;
+    padding: 0.5vw 0.6vw;
 }
 
-/* card padronizado: foto pequena a esquerda, texto a direita - tamanho fixo
-   independente do tanto de texto (nome longo trunca com reticencias em vez
-   de esticar o card). Altura vem de --altura-card (definida em #board) pra
-   ficar sempre igual a .rodada-label e as linhas alinharem entre as colunas.
-   Fundo de papel continuo - a unica linha demarcando cada rodada e essa
-   regua embaixo do card (ver .rodada-label pra mesma regua na coluna de
-   rodadas, alinhando pra parecer continua por toda a tabela) */
+/* card = objeto solido, nao retangulo flat: borda grossa de tinta + sombra
+   dura (sem blur) na cor do time, como se a cartela tivesse descolado da
+   mesa. Altura vem de --altura-card (definida em #board) pra ficar sempre
+   igual a .rodada-label e as linhas alinharem entre as colunas */
 .pick-card {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 0.5vw;
-    background: transparent;
-    border-left: 3px solid var(--cor-time, var(--linha-forte));
-    border-bottom: 1px solid var(--linha);
+    background: var(--cartao);
+    border: 2px solid var(--tinta);
+    border-radius: 6px;
+    box-shadow: 3px 3px 0 var(--cor-time, var(--tinta-fraca));
     padding: 0.3vw 0.5vw;
     height: var(--altura-card);
     min-height: 56px;
+    margin: 0 3px 3px 0; /* espaco pra sombra dura nao cortar no card vizinho */
     overflow: hidden;
     animation: entrada 0.4s ease-out;
 }
 
 .pick-card .foto {
-    width: 3.5vw;
-    height: 3.5vw;
-    min-width: 45px;
-    min-height: 45px;
+    width: 3.3vw;
+    height: 3.3vw;
+    min-width: 42px;
+    min-height: 42px;
     aspect-ratio: 1 / 1;
     object-fit: cover;
-    border-radius: 0;
+    border-radius: 4px;
+    border: 2px solid var(--tinta);
     background: var(--linha);
     flex-shrink: 0;
 }
@@ -280,23 +264,21 @@ body {
     flex: 1;
 }
 
-/* escudo do time no espaco vazio a direita do card - opacidade reduzida
-   pra nao competir com o nome/posicao, some sozinho se o logo desse time
-   nao tiver sido baixado (ver onerror em criarCardPick) */
+/* escudo do time no espaco vazio a direita do card */
 .pick-card .logo-time {
-    width: 2.2vw;
-    height: 2.2vw;
-    min-width: 28px;
-    min-height: 28px;
+    width: 2.1vw;
+    height: 2.1vw;
+    min-width: 27px;
+    min-height: 27px;
     object-fit: contain;
     flex-shrink: 0;
-    opacity: 0.7;
+    opacity: 0.85;
 }
 
 .pick-card .nome {
     font-family: var(--fonte-corpo);
-    font-size: 0.82vw;
-    font-weight: 600;
+    font-size: 0.8vw;
+    font-weight: 700;
     line-height: 1.2;
     color: var(--tinta);
     white-space: nowrap;
@@ -305,9 +287,10 @@ body {
 }
 
 .pick-card .info {
-    font-family: var(--fonte-mono);
-    font-size: 0.6vw;
-    letter-spacing: 0.04em;
+    font-family: var(--fonte-etiqueta);
+    font-size: 0.62vw;
+    font-weight: 700;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--tinta-suave);
     white-space: nowrap;
@@ -316,30 +299,35 @@ body {
 }
 
 .pick-card .rodada {
-    font-family: var(--fonte-mono);
-    font-size: 0.56vw;
-    letter-spacing: 0.04em;
+    font-family: var(--fonte-etiqueta);
+    font-size: 0.58vw;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
     color: var(--tinta-fraca);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* coluna de rodadas - mesma base de papel do board inteiro, tipografia
-   mono tracked (etiqueta de indice, nao "card de dado") */
+/* coluna de rodadas - etiqueta tecnica (mesma familia usada nos metadados
+   do card), sem cor de time nenhuma */
 .rodada-label {
     height: var(--altura-card);
     min-height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
-    border-bottom: 1px solid var(--linha);
+    background: var(--cartao);
+    border: 2px solid var(--linha);
+    border-radius: 6px;
+    margin: 0 3px 3px 0;
     color: var(--tinta-suave);
-    font-family: var(--fonte-mono);
-    font-size: 0.72vw;
-    font-weight: 600;
-    letter-spacing: 0.06em;
+    font-family: var(--fonte-etiqueta);
+    font-size: 0.75vw;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 @keyframes entrada {
@@ -373,9 +361,10 @@ body {
 }
 
 .desbloquear-caixa label {
-    font-family: var(--fonte-mono);
+    font-family: var(--fonte-etiqueta);
     font-size: 0.85vw;
-    letter-spacing: 0.06em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--tinta-suave);
 }
@@ -384,41 +373,45 @@ body {
     font-family: var(--fonte-corpo);
     font-size: 1.1vw;
     padding: 0.5vw 1vw;
-    border-radius: 0;
-    border: 1px solid var(--linha-forte);
-    background: var(--papel-cartao);
+    border-radius: 6px;
+    border: 2px solid var(--tinta);
+    background: var(--cartao);
     color: var(--tinta);
 }
 
 #btn-desbloquear {
-    font-family: var(--fonte-mono);
-    font-size: 1.3vw;
-    letter-spacing: 0.06em;
+    font-family: var(--fonte-placar);
+    font-size: 1.5vw;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
-    padding: 1vw 2.2vw;
-    background: var(--tinta);
+    padding: 0.9vw 2vw;
+    background: var(--nfl-azul);
     color: var(--papel);
-    border: none;
-    border-radius: 0;
+    border: 2px solid var(--tinta);
+    border-radius: 6px;
+    box-shadow: 4px 4px 0 var(--tinta);
     cursor: pointer;
-    font-weight: 600;
     margin-top: 0.5vw;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
 #btn-desbloquear:hover {
-    background: var(--aco);
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--tinta);
 }
 
 /* ---- coreografia de revelacao (etapa 4) ---- */
 /* fica escura de proposito, mesmo com o resto do board claro - e o momento
    de holofote/suspense, o contraste com o board claro por tras reforca o
-   efeito. Texto em tom de papel (nao branco puro), fechando o circulo da
-   paleta: tinta sobre papel no board, papel sobre tinta na revelacao */
+   efeito. Textura de pontos (halftone) bem sutil no fundo - referencia a
+   programa impresso de estadio, nao tela de app */
 
 #revelacao {
     position: fixed;
     inset: 0;
-    background: rgba(10, 9, 6, 0.94);
+    background:
+        radial-gradient(circle, rgba(255, 255, 255, 0.05) 1.5px, transparent 1.6px) 0 0 / 14px 14px,
+        rgba(6, 8, 12, 0.95);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -437,21 +430,21 @@ body {
 }
 
 .revelacao-anuncio {
-    font-family: var(--fonte-mono);
-    font-size: 1.3vw;
-    font-weight: 600;
+    font-family: var(--fonte-etiqueta);
+    font-size: 1.2vw;
+    font-weight: 700;
     color: var(--tinta-fraca);
-    letter-spacing: 0.35em;
+    letter-spacing: 0.4em;
     margin-bottom: 1.5vw;
 }
 
 #rev-foto {
-    width: 22vw;
-    height: 22vw;
+    width: 21vw;
+    height: 21vw;
     object-fit: cover;
-    border-radius: 0;
-    border: 4px solid var(--cor-time, var(--linha-forte));
-    box-shadow: 0 0 1.2vw 0 var(--cor-time, transparent);
+    border-radius: 8px;
+    border: 5px solid var(--cor-time, #444);
+    box-shadow: 6px 6px 0 rgba(255, 255, 255, 0.12);
     filter: blur(28px) brightness(0.6);
     transition: filter 0.7s ease, box-shadow 0.7s ease;
     background: #222;
@@ -459,18 +452,19 @@ body {
 
 #rev-foto.revelada {
     filter: blur(0) brightness(1);
-    box-shadow: 0 0 2.4vw 0.2vw var(--cor-time, transparent);
+    box-shadow: 8px 8px 0 var(--cor-time, transparent);
 }
 
 .revelacao-nome {
-    font-family: var(--fonte-display);
-    font-size: 4.6vw;
-    font-weight: 600;
-    font-style: italic;
+    font-family: var(--fonte-placar);
+    font-size: 5vw;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
     color: var(--papel);
     margin-top: 1vw;
     opacity: 0;
-    transform: scale(0.94);
+    transform: scale(0.9);
     transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
@@ -480,9 +474,10 @@ body {
 }
 
 .revelacao-info {
-    font-family: var(--fonte-mono);
+    font-family: var(--fonte-etiqueta);
     font-size: 1.1vw;
-    letter-spacing: 0.1em;
+    font-weight: 700;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--tinta-fraca);
     margin-top: 0.5vw;
@@ -495,11 +490,14 @@ body {
 }
 
 .revelacao-veredito {
-    font-family: var(--fonte-mono);
+    display: inline-block;
+    font-family: var(--fonte-placar);
     font-size: 1.5vw;
-    font-weight: 700;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.05em;
+    padding: 0.3vw 1vw;
     margin-top: 1.4vw;
+    border: 3px solid currentColor;
+    border-radius: 6px;
     opacity: 0;
     transform: translateY(15px);
     transition: opacity 0.4s ease, transform 0.4s ease;
@@ -510,8 +508,8 @@ body {
     transform: translateY(0);
 }
 
-.revelacao-veredito.roubo { color: var(--roubo); }
-.revelacao-veredito.reach { color: var(--reach); }
+.revelacao-veredito.roubo { color: var(--ouro); }
+.revelacao-veredito.reach { color: var(--vermelho); }
 
 /* rodape do comentarista - some entre uma rodada e outra (da mais espaco
    pro board), e "sobe" animado quando um comentario novo chega. Fica visivel
@@ -525,7 +523,7 @@ body {
     gap: 1vw;
     height: 0;
     padding: 0 1.5vw;
-    background: var(--papel-cartao);
+    background: var(--cartao);
     border-top: 0px solid var(--tinta);
     overflow: hidden;
     transition: height 0.6s ease, padding 0.6s ease, border-top-width 0.6s ease;
@@ -534,25 +532,25 @@ body {
 #comentarista.mostrar {
     height: 20vh;
     padding: 0.8vw 1.5vw;
-    border-top-width: 2px;
+    border-top-width: 3px;
 }
 
 #comentarista img {
     height: 100%;
     aspect-ratio: 1 / 1;
     object-fit: cover;
-    border-radius: 0;
-    border: 2px solid var(--aco);
+    border-radius: 8px;
+    border: 3px solid var(--tinta);
+    box-shadow: 4px 4px 0 var(--nfl-azul);
     flex-shrink: 0;
 }
 
 .balao {
     position: relative;
-    background: transparent;
-    border: none;
-    border-left: 2px solid var(--linha-forte);
-    border-radius: 0;
-    padding: 0.4vw 0 0.4vw 1.4vw;
+    background: var(--papel);
+    border: 2px solid var(--tinta);
+    border-radius: 8px;
+    padding: 0.6vw 1.2vw;
     flex: 1;
     height: 100%;
     display: flex;
@@ -561,10 +559,10 @@ body {
 }
 
 .balao-titulo {
-    font-family: var(--fonte-mono);
-    font-size: 0.75vw;
-    font-weight: 600;
-    color: var(--tinta-fraca);
+    font-family: var(--fonte-etiqueta);
+    font-size: 0.8vw;
+    font-weight: 700;
+    color: var(--nfl-azul);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     margin-bottom: 0.3vw;
@@ -572,8 +570,8 @@ body {
 
 .balao-texto {
     font-family: var(--fonte-corpo);
-    font-style: italic;
-    font-size: 1.55vw;
+    font-size: 1.5vw;
+    font-weight: 400;
     line-height: 1.4;
     color: var(--tinta);
     overflow-y: auto;
