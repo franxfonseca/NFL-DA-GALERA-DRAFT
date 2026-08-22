@@ -3,36 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <title>Draft Night - Controle</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='tema.css') }}">
 <style>
-    * { box-sizing: border-box; }
     body {
-        font-family: "Segoe UI", Arial, sans-serif;
-        background: #12161f;
-        color: #f2f2f2;
         max-width: 480px;
         margin: 40px auto;
         padding: 0 16px;
     }
-    h1 { font-size: 1.4rem; margin-bottom: 4px; }
-    p.sub { color: #a0a8bd; margin-bottom: 24px; font-size: 0.9rem; }
+    h1 {
+        font-family: var(--fonte-placar);
+        font-size: 1.8rem;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+    p.sub { color: var(--tinta-suave); margin-bottom: 24px; font-size: 0.9rem; }
     .campo-wrapper { position: relative; }
     input[type=text] {
         width: 100%;
         padding: 14px;
+        font-family: var(--fonte-corpo);
         font-size: 1.2rem;
         border-radius: 6px;
-        border: 2px solid #2a3142;
-        background: #1b2130;
-        color: #fff;
+        border: 2px solid var(--tinta);
+        background: var(--cartao);
+        color: var(--tinta);
     }
     #sugestoes {
         position: absolute;
-        top: calc(100% + 4px);
+        top: calc(100% + 6px);
         left: 0;
         right: 0;
-        background: #1b2130;
-        border: 2px solid #2a3142;
+        background: var(--cartao);
+        border: 2px solid var(--tinta);
         border-radius: 6px;
+        box-shadow: 4px 4px 0 var(--linha);
         overflow: hidden;
         z-index: 10;
         display: none;
@@ -42,49 +47,69 @@
         cursor: pointer;
         display: flex;
         justify-content: space-between;
-        border-bottom: 1px solid #2a3142;
+        border-bottom: 1px solid var(--linha);
+        font-family: var(--fonte-corpo);
     }
     .sugestao-item:last-child { border-bottom: none; }
     .sugestao-item:hover, .sugestao-item.ativa {
-        background: #2a3142;
+        background: var(--papel);
     }
     .sugestao-item .info {
-        color: #a0a8bd;
-        font-size: 0.85rem;
+        font-family: var(--fonte-etiqueta);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--tinta-suave);
+        font-size: 0.8rem;
     }
     button {
         margin-top: 12px;
-        padding: 14px;
-        font-size: 1.1rem;
         width: 100%;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
     }
-    #enviar { background: #2e7d32; color: #fff; }
-    #desfazer { background: #444; color: #fff; margin-top: 24px; }
-    #reset { background: #7d2e2e; color: #fff; }
-    #finalizar { background: #8a6d1a; color: #fff; }
+    #enviar { background: var(--nfl-azul); }
+    #desfazer { background: var(--cartao); color: var(--tinta); margin-top: 24px; }
+    #reset { background: var(--vermelho); }
+    #finalizar { background: var(--ouro); }
     #mensagem {
         margin-top: 16px;
         padding: 12px;
         border-radius: 6px;
+        border: 2px solid transparent;
         min-height: 20px;
+        font-family: var(--fonte-corpo);
         font-size: 0.95rem;
     }
-    #mensagem.ok { background: #1b3a1e; }
-    #mensagem.erro { background: #3a1b1b; }
+    #mensagem.ok { background: #eaf6ef; border-color: var(--verde); color: var(--verde); }
+    #mensagem.erro { background: #fbecea; border-color: var(--vermelho); color: var(--vermelho); }
+
+    #link-comentarios {
+        text-align: center;
+        margin-top: 12px;
+    }
+    #link-comentarios a {
+        font-family: var(--fonte-etiqueta);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        color: var(--nfl-azul);
+    }
 
     details {
         margin-top: 28px;
-        border: 2px solid #2a3142;
+        border: 2px solid var(--tinta);
         border-radius: 6px;
         padding: 8px 12px;
+        background: var(--cartao);
     }
     summary {
         cursor: pointer;
         padding: 8px 0;
-        font-weight: 600;
+        font-family: var(--fonte-etiqueta);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        font-size: 0.9rem;
     }
     .linha-time {
         display: flex;
@@ -92,25 +117,28 @@
         margin-bottom: 8px;
     }
     .linha-time span {
-        width: 28px;
+        width: 24px;
         flex-shrink: 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #a0a8bd;
+        font-family: var(--fonte-etiqueta);
+        font-weight: 700;
+        color: var(--tinta-suave);
         font-size: 0.85rem;
     }
     .linha-time input {
         width: 100%;
         padding: 8px;
+        font-family: var(--fonte-corpo);
         font-size: 0.9rem;
         border-radius: 4px;
-        border: 2px solid #2a3142;
-        background: #1b2130;
-        color: #fff;
+        border: 2px solid var(--linha);
+        background: var(--papel);
+        color: var(--tinta);
     }
     .linha-time .campo-cor {
-        width: 40px;
+        width: 36px;
         flex-shrink: 0;
         padding: 2px;
         cursor: pointer;
@@ -126,16 +154,16 @@
             <input type="text" id="nome" placeholder="Nome do jogador" autofocus autocomplete="off">
             <div id="sugestoes"></div>
         </div>
-        <button type="submit" id="enviar">Registrar pick</button>
+        <button type="submit" id="enviar" class="dn-botao">Registrar pick</button>
     </form>
 
     <div id="mensagem"></div>
 
-    <button id="desfazer">Desfazer ultimo pick</button>
-    <button id="reset">Zerar draft inteiro</button>
-    <button id="finalizar">Finalizar draft e gerar análise</button>
-    <p class="sub" style="text-align: center; margin-top: 12px;">
-        <a href="/comentarios" style="color: #d8c98a;" target="_blank">Ver comentários do Tom Brady por rodada →</a>
+    <button id="desfazer" class="dn-botao">Desfazer ultimo pick</button>
+    <button id="reset" class="dn-botao">Zerar draft inteiro</button>
+    <button id="finalizar" class="dn-botao">Finalizar draft e gerar análise</button>
+    <p id="link-comentarios">
+        <a href="/comentarios" target="_blank">Ver comentários do Tom Brady por rodada →</a>
     </p>
 
     <details id="secao-times">
@@ -145,7 +173,7 @@
             <span>{{ slot }}</span>
             <input type="text" class="campo-nome-time" placeholder="Nome do time">
             <input type="text" class="campo-dono" placeholder="Nome do dono">
-            <input type="color" class="campo-cor" title="Cor do cabecalho no board" value="#1456d6">
+            <input type="color" class="campo-cor" title="Cor do cabecalho no board" value="#013369">
         </div>
         {% endfor %}
     </details>
@@ -303,7 +331,7 @@
                 const info = times[linha.dataset.slot] || {};
                 linha.querySelector(".campo-nome-time").value = info.nome_time || "";
                 linha.querySelector(".campo-dono").value = info.dono || "";
-                linha.querySelector(".campo-cor").value = info.cor_cabecalho || "#1456d6";
+                linha.querySelector(".campo-cor").value = info.cor_cabecalho || "#013369";
             });
         }
 

@@ -3,14 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <title>Draft Night - Comando</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='tema.css') }}">
 <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
         width: 100%;
         min-height: 100%;
-        background: #0b0e14;
-        color: #f2f2f2;
-        font-family: "Segoe UI", Arial, sans-serif;
     }
     body {
         display: flex;
@@ -20,77 +17,92 @@
     }
 
     h1 {
-        font-size: 1.8rem;
-        letter-spacing: 0.1em;
-        color: #d8c98a;
+        font-family: var(--fonte-placar);
+        font-size: 2.2rem;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: var(--tinta);
         margin-bottom: 8px;
     }
 
     p.sub {
-        color: #a0a8bd;
+        font-family: var(--fonte-corpo);
+        color: var(--tinta-suave);
         margin-bottom: 40px;
     }
 
     #lista {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 16px;
+        gap: 20px;
         width: 100%;
         max-width: 900px;
     }
 
     a.card {
         display: block;
-        background: #12161f;
-        border: 2px solid #2a3142;
-        border-radius: 10px;
         padding: 20px;
         text-decoration: none;
-        color: #f2f2f2;
-        transition: border-color 0.2s ease;
+        color: var(--tinta);
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
-    a.card:hover { border-color: #d8c98a; }
+    a.card:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0 var(--linha);
+    }
+
+    a.card .etiqueta {
+        margin-bottom: 6px;
+    }
 
     a.card .titulo {
-        font-size: 1.15rem;
-        font-weight: bold;
+        font-family: var(--fonte-placar);
+        font-size: 1.3rem;
+        letter-spacing: 0.01em;
+        text-transform: uppercase;
         margin-bottom: 6px;
     }
 
     a.card .descricao {
+        font-family: var(--fonte-corpo);
         font-size: 0.85rem;
-        color: #a0a8bd;
+        color: var(--tinta-suave);
         line-height: 1.4;
     }
 </style>
 </head>
 <body>
-    <h1>PAINEL DE COMANDO</h1>
+    <h1>Painel de Comando</h1>
     <p class="sub">Clique numa página para abrir em outra guia.</p>
 
     <div id="lista">
-        <a class="card" href="/home" target="_blank">
-            <div class="titulo">🏈 Home</div>
+        <a class="card dn-cartao" href="/home" target="_blank">
+            <div class="etiqueta dn-etiqueta">Abertura</div>
+            <div class="titulo">Home</div>
             <div class="descricao">Tela de abertura com as boas-vindas do Tom Brady.</div>
         </a>
 
-        <a class="card" href="/board" target="_blank">
-            <div class="titulo">📺 Board</div>
+        <a class="card dn-cartao" href="/board" target="_blank">
+            <div class="etiqueta dn-etiqueta">Projetor</div>
+            <div class="titulo">Board</div>
             <div class="descricao">Tela cheia pro projetor/TV - onde o draft acontece ao vivo.</div>
         </a>
 
-        <a class="card" href="/control" target="_blank">
-            <div class="titulo">🎛️ Controle</div>
+        <a class="card dn-cartao" href="/control" target="_blank">
+            <div class="etiqueta dn-etiqueta">Operador</div>
+            <div class="titulo">Controle</div>
             <div class="descricao">Painel do operador - modo manual, nomes dos times, finalizar draft.</div>
         </a>
 
-        <a class="card" href="/comentarios" target="_blank">
-            <div class="titulo">💬 Comentários por rodada</div>
+        <a class="card dn-cartao" href="/comentarios" target="_blank">
+            <div class="etiqueta dn-etiqueta">Replay</div>
+            <div class="titulo">Comentários por rodada</div>
             <div class="descricao">Reveja as falas do Tom Brady de cada rodada já concluída.</div>
         </a>
 
-        <a class="card" href="/resultado" target="_blank">
-            <div class="titulo">🏆 Resultado final</div>
+        <a class="card dn-cartao" href="/resultado" target="_blank">
+            <div class="etiqueta dn-etiqueta">Final</div>
+            <div class="titulo">Resultado final</div>
             <div class="descricao">Nota e análise por time, gerada quando o draft é finalizado.</div>
         </a>
     </div>

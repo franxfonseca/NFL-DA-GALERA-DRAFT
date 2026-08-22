@@ -3,14 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <title>Draft Night</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='tema.css') }}">
 <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
         width: 100%;
         height: 100%;
-        background: #0b0e14;
-        color: #f2f2f2;
-        font-family: "Segoe UI", Arial, sans-serif;
         overflow: hidden;
     }
     body {
@@ -24,19 +21,23 @@
     }
 
     img {
-        width: 14vw;
-        height: 14vw;
-        min-width: 140px;
-        min-height: 140px;
+        width: 13vw;
+        height: 13vw;
+        min-width: 130px;
+        min-height: 130px;
         object-fit: cover;
-        border-radius: 50%;
-        border: 4px solid #d8c98a;
+        border-radius: 8px;
+        border: 4px solid var(--tinta);
+        box-shadow: 6px 6px 0 var(--nfl-azul);
     }
 
     h1 {
-        font-size: 2.4vw;
-        letter-spacing: 0.1em;
-        color: #d8c98a;
+        font-family: var(--fonte-placar);
+        font-size: 3vw;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: var(--tinta);
+        margin-top: 1vh;
     }
 
     .fala {
@@ -47,55 +48,54 @@
     }
 
     .fala p {
-        font-size: 1.3vw;
+        font-family: var(--fonte-corpo);
+        font-size: 1.25vw;
         line-height: 1.5;
-        color: #ddd;
-        font-style: italic;
+        color: var(--tinta-suave);
     }
 
     .btn-ouvir {
-        background: #1b2130;
-        border: 2px solid #2a3142;
-        border-radius: 50%;
-        width: 2.4vw;
-        height: 2.4vw;
-        min-width: 32px;
-        min-height: 32px;
+        background: var(--cartao);
+        border: 2px solid var(--tinta);
+        border-radius: 6px;
+        box-shadow: 3px 3px 0 var(--tinta);
+        width: 2.6vw;
+        height: 2.6vw;
+        min-width: 36px;
+        min-height: 36px;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         font-size: 1.2vw;
         flex-shrink: 0;
-        color: #d8c98a;
+        color: var(--tinta);
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
-    .btn-ouvir:hover { border-color: #d8c98a; }
-    .btn-ouvir.falando { background: #d8c98a; color: #0b0e14; }
+    .btn-ouvir:hover { transform: translate(1px, 1px); box-shadow: 2px 2px 0 var(--tinta); }
+    .btn-ouvir.falando { background: var(--nfl-azul); color: var(--papel); border-color: var(--tinta); }
 
     #btn-board {
         margin-top: 2vh;
+        font-family: var(--fonte-placar);
         font-size: 1.4vw;
-        padding: 1vw 2.4vw;
-        background: #2e7d32;
-        color: #fff;
-        border: none;
-        border-radius: 12px;
-        cursor: pointer;
-        font-weight: bold;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        padding: 0.9vw 2.4vw;
         text-decoration: none;
     }
 </style>
 </head>
 <body>
     <img src="{{ url_for('static', filename='img/tom_brady.png') }}" alt="Tom Brady">
-    <h1>DRAFT NIGHT</h1>
+    <h1>Draft Night</h1>
 
     <div class="fala">
         <button class="btn-ouvir" id="btn-ouvir" title="Ouvir">🔊</button>
         <p id="texto-boas-vindas"></p>
     </div>
 
-    <a id="btn-board" href="/board">Entrar no Board</a>
+    <a id="btn-board" class="dn-botao" href="/board">Entrar no Board</a>
 
     <script src="{{ url_for('static', filename='narrador.js') }}"></script>
     <script>

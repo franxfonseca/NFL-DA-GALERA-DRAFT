@@ -63,8 +63,14 @@ def carregar_env() -> dict:
 
 
 GROQ_API_KEY = carregar_env().get("GROQ_API_KEY", "")
-GROQ_MODELO = "llama-3.1-8b-instant"  # rapido - comentario de rodada, ao vivo
-GROQ_MODELO_FINAL = "llama-3.3-70b-versatile"  # maior - analise final, sem pressa
+# llama-3.1-8b-instant e llama-3.3-70b-versatile foram descontinuados pela
+# Groq - trocado pros modelos "gpt-oss" atuais. Sao modelos de raciocinio
+# (gastam parte do max_tokens "pensando" antes de responder, ver
+# completion_tokens_details.reasoning_tokens na resposta da API) - por
+# isso o max_tokens de cada chamada tem que ter folga, nao so o tamanho
+# do texto final esperado
+GROQ_MODELO = "openai/gpt-oss-20b"  # rapido - comentario de rodada, ao vivo
+GROQ_MODELO_FINAL = "openai/gpt-oss-120b"  # maior - analise final, sem pressa
 
 ELEVENLABS_API_KEY = carregar_env().get("ELEVENLABS_API_KEY", "")
 # chave reserva, de outra conta - usada so se a principal falhar (sem
@@ -357,12 +363,17 @@ def gerar_comentario_rodada(rodada: int) -> str | None:
         "continuar' ou pedindo o proximo passo."
     )
 
-    # modelo maior (o mesmo da analise final) - o rapido (8B) comecava a
+    # modelo maior (o mesmo da analise final) - o modelo rapido comecava a
     # inventar jogador fora da lista ou perder o tom critico quando tinha
     # que cobrir varios reach/roubo na mesma rodada. Ainda roda em segundo
-    # plano, entao a latencia extra nao trava o show
-    max_tokens_comentario = min(500, 130 + 60 * len(selecionados))
-    resposta = chamar_groq(prompt, GROQ_MODELO_FINAL, max_tokens=max_tokens_comentario, timeout=15)
+    # plano, entao a latencia extra nao trava o show.
+    # max_tokens generoso: os modelos "gpt-oss" da Groq gastam uma parte
+    # "pensando" antes de responder (reasoning_tokens), que nao aparece no
+    # texto final mas consome do mesmo orcamento - com pouca folga, a
+    # resposta as vezes vinha vazia (gastou tudo pensando, nada sobrou pro
+    # texto)
+    max_tokens_comentario = min(1500, 500 + 200 * len(selecionados))
+    resposta = chamar_groq(prompt, GROQ_MODELO_FINAL, max_tokens=max_tokens_comentario, timeout=25)
     if resposta is None:
         return None
 
@@ -437,7 +448,11 @@ def gerar_analise_final() -> dict | None:
         "nada antes nem depois, sem markdown, sem crases."
     )
 
-    resposta = chamar_groq(prompt, GROQ_MODELO_FINAL, max_tokens=2000, temperatura=0.7, timeout=30)
+    # max_tokens generoso (ver comentario equivalente em gerar_comentario_rodada
+    # sobre reasoning_tokens dos modelos "gpt-oss") - 12 times pra avaliar,
+    # sem pressa de latencia aqui (so roda quando o operador clica em
+    # "Finalizar draft")
+    resposta = chamar_groq(prompt, GROQ_MODELO_FINAL, max_tokens=4000, temperatura=0.7, timeout=45)
     if resposta is None:
         return None
 

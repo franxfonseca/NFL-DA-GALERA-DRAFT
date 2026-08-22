@@ -3,30 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <title>Draft Night - Comentários das Rodadas</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='tema.css') }}">
 <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-        width: 100%;
-        min-height: 100%;
-        background: #0b0e14;
-        color: #f2f2f2;
-        font-family: "Segoe UI", Arial, sans-serif;
-    }
+    html, body { width: 100%; min-height: 100%; }
     body { padding: 3vh 3vw; }
 
     h1 {
-        font-size: 2.2vw;
+        font-family: var(--fonte-placar);
+        font-size: 2.4vw;
         text-align: center;
-        letter-spacing: 0.1em;
-        color: #d8c98a;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: var(--tinta);
         margin-bottom: 2vh;
     }
 
     #estado-vazio {
+        font-family: var(--fonte-corpo);
         text-align: center;
         margin-top: 15vh;
         font-size: 1.4vw;
-        color: #a0a8bd;
+        color: var(--tinta-suave);
     }
 
     #lista {
@@ -38,9 +35,11 @@
     }
 
     .card-rodada {
-        background: #12161f;
-        border: 2px solid #2a3142;
-        border-radius: 10px;
+        background: var(--cartao);
+        border: 2px solid var(--tinta);
+        border-radius: 8px;
+        box-shadow: 4px 4px 0 var(--nfl-azul);
+        margin: 0 0.3vw 0.3vw 0;
         padding: 1vw 1.4vw;
         display: flex;
         align-items: flex-start;
@@ -53,8 +52,8 @@
         min-width: 44px;
         min-height: 44px;
         object-fit: cover;
-        border-radius: 50%;
-        border: 2px solid #d8c98a;
+        border-radius: 6px;
+        border: 2px solid var(--tinta);
         flex-shrink: 0;
     }
 
@@ -64,25 +63,29 @@
         display: flex;
         align-items: center;
         gap: 0.6vw;
-        margin-bottom: 0.3vw;
+        margin-bottom: 0.4vw;
     }
 
     .card-rodada .titulo span.rotulo {
-        font-size: 0.9vw;
-        color: #a0a8bd;
-        letter-spacing: 0.05em;
+        font-family: var(--fonte-etiqueta);
+        font-size: 0.85vw;
+        font-weight: 700;
+        color: var(--nfl-azul);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
     }
 
     .card-rodada .texto {
+        font-family: var(--fonte-corpo);
         font-size: 1vw;
         line-height: 1.45;
-        color: #ddd;
+        color: var(--tinta);
     }
 
     .btn-ouvir {
-        background: #1b2130;
-        border: 2px solid #2a3142;
-        border-radius: 50%;
+        background: var(--papel);
+        border: 2px solid var(--tinta);
+        border-radius: 4px;
         width: 2vw;
         height: 2vw;
         min-width: 28px;
@@ -93,16 +96,16 @@
         cursor: pointer;
         font-size: 1vw;
         flex-shrink: 0;
-        color: #d8c98a;
+        color: var(--tinta);
     }
-    .btn-ouvir:hover { border-color: #d8c98a; }
-    .btn-ouvir.falando { background: #d8c98a; color: #0b0e14; }
+    .btn-ouvir:hover { background: var(--nfl-azul); color: var(--papel); }
+    .btn-ouvir.falando { background: var(--nfl-azul); color: var(--papel); }
 
     .oculto { display: none; }
 </style>
 </head>
 <body>
-    <h1>COMENTÁRIOS DO TOM BRADY, POR RODADA</h1>
+    <h1>Comentários do Tom Brady, por Rodada</h1>
 
     <div id="estado-vazio" class="oculto">Nenhuma rodada terminada ainda - o comentário sai assim que o último pick da rodada 1 acontecer.</div>
     <div id="lista"></div>

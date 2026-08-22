@@ -1,0 +1,116 @@
+/* ============================================================
+   DRAFT NIGHT — tema compartilhado (fontes + paleta + tokens)
+   Usado por todas as paginas: board, control, home, comando,
+   resultado, comentarios. Mantem o mesmo sistema visual em
+   qualquer tela que o operador ou a galera abrir.
+   Fontes hospedadas localmente - regra do projeto: nada depende
+   de rede durante o evento.
+   ============================================================ */
+
+@font-face {
+    font-family: "Anton";
+    src: url("/static/fonts/Anton-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Archivo";
+    src: url("/static/fonts/Archivo-Variable.woff2") format("woff2");
+    font-weight: 400 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Archivo Narrow";
+    src: url("/static/fonts/ArchivoNarrow-Variable.woff2") format("woff2");
+    font-weight: 600 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    --papel: #f5f5f1;
+    --cartao: #ffffff;
+    --linha: #e2e4e8;
+    --tinta: #0b0e14;
+    --tinta-suave: #565c68;
+    --tinta-fraca: #9299a6;
+    --nfl-azul: #013369;
+    --ouro: #b8860b;
+    --vermelho: #a5342f;
+    --verde: #1a7a4c;
+
+    --fonte-placar: "Anton", "Arial Narrow", sans-serif;
+    --fonte-corpo: "Archivo", Arial, sans-serif;
+    --fonte-etiqueta: "Archivo Narrow", Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    background: var(--papel);
+    color: var(--tinta);
+    font-family: var(--fonte-corpo);
+}
+
+/* ---- pecas reutilizaveis (botao, etiqueta, cartao) ---- */
+
+.dn-botao {
+    font-family: var(--fonte-placar);
+    font-size: 1.1rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    padding: 0.7rem 1.4rem;
+    background: var(--nfl-azul);
+    color: var(--papel);
+    border: 2px solid var(--tinta);
+    border-radius: 6px;
+    box-shadow: 3px 3px 0 var(--tinta);
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.dn-botao:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--tinta);
+}
+
+.dn-botao:disabled {
+    opacity: 0.5;
+    cursor: default;
+    transform: none;
+    box-shadow: 3px 3px 0 var(--tinta);
+}
+
+.dn-botao.secundario {
+    background: var(--cartao);
+    color: var(--tinta);
+}
+
+.dn-botao.perigo {
+    background: var(--vermelho);
+    color: var(--papel);
+}
+
+.dn-etiqueta {
+    font-family: var(--fonte-etiqueta);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--tinta-suave);
+}
+
+.dn-cartao {
+    background: var(--cartao);
+    border: 2px solid var(--tinta);
+    border-radius: 8px;
+    box-shadow: 4px 4px 0 var(--linha);
+}

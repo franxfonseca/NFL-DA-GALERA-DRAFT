@@ -3,30 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <title>Draft Night - Resultado</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='tema.css') }}">
 <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-        width: 100%;
-        min-height: 100%;
-        background: #0b0e14;
-        color: #f2f2f2;
-        font-family: "Segoe UI", Arial, sans-serif;
-    }
+    html, body { width: 100%; min-height: 100%; }
     body { padding: 3vh 3vw; }
 
     h1 {
-        font-size: 2.2vw;
+        font-family: var(--fonte-placar);
+        font-size: 2.4vw;
         text-align: center;
-        letter-spacing: 0.1em;
-        color: #d8c98a;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: var(--tinta);
         margin-bottom: 2vh;
     }
 
     #estado-vazio, #estado-gerando {
+        font-family: var(--fonte-corpo);
         text-align: center;
         margin-top: 15vh;
         font-size: 1.4vw;
-        color: #a0a8bd;
+        color: var(--tinta-suave);
     }
 
     #resumo-geral {
@@ -36,36 +33,41 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.6vw;
+        gap: 0.8vw;
     }
 
     #resumo-geral p {
-        font-size: 1.2vw;
-        font-style: italic;
-        color: #ccc;
+        font-family: var(--fonte-corpo);
+        font-size: 1.15vw;
+        color: var(--tinta-suave);
         line-height: 1.5;
     }
 
     #grade-times {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 1.2vw;
+        gap: 1.6vw 1.4vw;
         max-width: 90vw;
         margin: 0 auto;
     }
 
     .card-time {
-        background: #12161f;
-        border: 2px solid #2a3142;
-        border-radius: 10px;
+        background: var(--cartao);
+        border: 2px solid var(--tinta);
+        border-radius: 8px;
+        box-shadow: 4px 4px 0 var(--cor-chip, var(--nfl-azul));
         padding: 1vw;
         display: flex;
         flex-direction: column;
-        gap: 0.4vw;
+        gap: 0.5vw;
         cursor: pointer;
+        margin: 0 0.2vw 0.2vw 0;
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
-    .card-time:hover { border-color: #444d63; }
-    .card-time.aberto { border-color: #d8c98a; }
+    .card-time:hover, .card-time.aberto {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0 var(--cor-chip, var(--nfl-azul));
+    }
 
     .card-time .cabecalho {
         display: flex;
@@ -73,9 +75,24 @@
         align-items: center;
     }
 
-    .card-time .nome { font-size: 1.05vw; font-weight: bold; }
-    .card-time .dono { font-size: 0.8vw; color: #a0a8bd; }
-    .card-time .nota { font-size: 1.8vw; font-weight: 900; }
+    .card-time .nome {
+        font-family: var(--fonte-placar);
+        font-size: 1.15vw;
+        letter-spacing: 0.01em;
+        text-transform: uppercase;
+    }
+    .card-time .dono {
+        font-family: var(--fonte-etiqueta);
+        font-size: 0.7vw;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--tinta-fraca);
+    }
+    .card-time .nota {
+        font-family: var(--fonte-placar);
+        font-size: 2vw;
+    }
 
     .card-time .rodape {
         display: flex;
@@ -83,18 +100,24 @@
         gap: 0.5vw;
     }
 
-    .card-time .comentario { font-size: 0.85vw; color: #ccc; line-height: 1.4; flex: 1; }
+    .card-time .comentario {
+        font-family: var(--fonte-corpo);
+        font-size: 0.85vw;
+        color: var(--tinta-suave);
+        line-height: 1.4;
+        flex: 1;
+    }
 
-    .nota-a { color: #4caf50; }
-    .nota-b { color: #8bc34a; }
-    .nota-c { color: #ffc107; }
-    .nota-d { color: #ff9800; }
-    .nota-f { color: #e63946; }
+    .nota-a { color: var(--verde); }
+    .nota-b { color: #4c8a3f; }
+    .nota-c { color: var(--ouro); }
+    .nota-d { color: #b5651d; }
+    .nota-f { color: var(--vermelho); }
 
     .btn-ouvir {
-        background: #1b2130;
-        border: 2px solid #2a3142;
-        border-radius: 50%;
+        background: var(--papel);
+        border: 2px solid var(--tinta);
+        border-radius: 4px;
         width: 2vw;
         height: 2vw;
         min-width: 28px;
@@ -105,19 +128,19 @@
         cursor: pointer;
         font-size: 1vw;
         flex-shrink: 0;
-        color: #d8c98a;
+        color: var(--tinta);
     }
-    .btn-ouvir:hover { border-color: #d8c98a; }
-    .btn-ouvir.falando { background: #d8c98a; color: #0b0e14; }
+    .btn-ouvir:hover { background: var(--nfl-azul); color: var(--papel); }
+    .btn-ouvir.falando { background: var(--nfl-azul); color: var(--papel); }
 
     .brady-mini {
         width: 2vw;
         height: 2vw;
         min-width: 28px;
         min-height: 28px;
-        border-radius: 50%;
+        border-radius: 4px;
         object-fit: cover;
-        border: 2px solid #d8c98a;
+        border: 2px solid var(--tinta);
         flex-shrink: 0;
     }
 
@@ -131,26 +154,29 @@
     .elenco {
         margin-top: 0.4vw;
         padding-top: 0.5vw;
-        border-top: 1px solid #2a3142;
+        border-top: 1px solid var(--linha);
         display: none;
         flex-direction: column;
-        gap: 0.2vw;
+        gap: 0.25vw;
     }
     .card-time.aberto .elenco { display: flex; }
 
     .elenco .jogador {
         display: flex;
         justify-content: space-between;
-        font-size: 0.78vw;
-        color: #ccc;
+        font-family: var(--fonte-etiqueta);
+        font-size: 0.72vw;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        color: var(--tinta-suave);
     }
-    .elenco .jogador .pos { color: #a0a8bd; }
+    .elenco .jogador .pos { color: var(--tinta-fraca); text-transform: uppercase; }
 
     .oculto { display: none; }
 </style>
 </head>
 <body>
-    <h1>ANÁLISE FINAL DO DRAFT</h1>
+    <h1>Análise Final do Draft</h1>
 
     <div id="estado-vazio" class="oculto">O draft ainda não foi finalizado. Vá em /control e clique em "Finalizar draft".</div>
     <div id="estado-gerando" class="oculto">Gerando análise final, um momento...</div>
@@ -209,6 +235,13 @@
 
                 const card = document.createElement("div");
                 card.className = "card-time";
+                // mesma cor do cabecalho do time no board (/control) - a
+                // sombra dura do card puxa pra a identidade do time. So
+                // seta a variavel se existir - setProperty com null vira a
+                // string "null" e quebra o fallback var(--cor-chip, ...)
+                if (infoTime.cor_cabecalho) {
+                    card.style.setProperty("--cor-chip", infoTime.cor_cabecalho);
+                }
 
                 const cabecalho = document.createElement("div");
                 cabecalho.className = "cabecalho";

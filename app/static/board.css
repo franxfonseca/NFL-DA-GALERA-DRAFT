@@ -11,54 +11,9 @@
    projeto: nada depende de rede durante o evento.
    ============================================================ */
 
-@font-face {
-    font-family: "Anton";
-    src: url("/static/fonts/Anton-Regular.woff2") format("woff2");
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: "Archivo";
-    src: url("/static/fonts/Archivo-Variable.woff2") format("woff2");
-    font-weight: 400 700;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: "Archivo Narrow";
-    src: url("/static/fonts/ArchivoNarrow-Variable.woff2") format("woff2");
-    font-weight: 600 700;
-    font-style: normal;
-    font-display: swap;
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-:root {
-    /* base clara domina, tinta estrutura (borda grossa em tudo),
-       azul NFL e o acento estrutural unico - ouro/vermelho so pro
-       veredito reach/roubo, nunca decorativo */
-    --papel: #f5f5f1;
-    --cartao: #ffffff;
-    --linha: #e2e4e8;
-    --tinta: #0b0e14;
-    --tinta-suave: #565c68;
-    --tinta-fraca: #9299a6;
-    --nfl-azul: #013369;
-    --ouro: #b8860b;
-    --vermelho: #a5342f;
-
-    --fonte-placar: "Anton", "Arial Narrow", sans-serif;
-    --fonte-corpo: "Archivo", Arial, sans-serif;
-    --fonte-etiqueta: "Archivo Narrow", Arial, sans-serif;
-}
+/* fontes + paleta + tokens compartilhados com o resto do app (control,
+   home, comando, resultado, comentarios) - ver tema.css */
+@import url("tema.css");
 
 html, body {
     width: 100%;
